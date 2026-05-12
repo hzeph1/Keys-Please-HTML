@@ -824,18 +824,29 @@
     overflow: hidden;
     align-items: center;
     background-color: #000000;
+    text-align: center;
   }
-  .header-logo {
+  .title-logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.4rem;
     font-weight: 600;
     letter-spacing: 0.03em;
     margin-bottom: 0.5rem;
-    align-items: center;
+    text-align: center;
   }
-  .header-logo span { 
+  .title-logo span { 
     color: var(--red); 
   }
+  .title-tagline { 
+    font-family: 'Crimson Pro', serif; 
+    font-size: 0.92rem; 
+    font-weight: 400; 
+    font-style: italic; 
+    color: #a09888; 
+    letter-spacing: 0.02em; 
+    margin-bottom: 1.5rem;
+  }
+
   .subtitle {
     font-family: 'Syne', sans-serif;
     font-size: 0.68rem;
@@ -844,8 +855,7 @@
     text-transform: uppercase;
     color: var(--gold);
     margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
+    text-align: center;
     gap: 0.75rem;
   }
 
@@ -946,10 +956,9 @@
 </nav>
 
 <section class="title-section">
-
-  <div class="header-logo">Keys <span>Please</span> Valet</div>
+  <div class="title-logo"><h1>Keys <span>Please</span> Valet</h1></div>
+  <div class="title-tagline">Park with absolute confidence.</div>
   <div class="subtitle">Premium Valet Management</div>
-
 </section>
 
 <!-- HERO -->
