@@ -94,7 +94,6 @@
     min-height: 100vh;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    padding-top: 70px;
     position: relative;
     overflow: hidden;
   }
@@ -818,6 +817,14 @@
     line-height: 1.78;
   }
 
+  .title-section {
+    grid-template-columns: 1fr 1fr;
+    padding-top: 70px;
+    position: relative;
+    overflow: hidden;
+    align-items: center;
+    background-color: #000000;
+  }
   .header-logo {
     font-family: 'Playfair Display', serif;
     font-size: 1.4rem;
@@ -826,6 +833,22 @@
     margin-bottom: 0.5rem;
     align-items: center;
   }
+  .header-logo span { 
+    color: var(--red); 
+  }
+  .subtitle {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   
   /* ── FOOTER ── */
   footer {
@@ -922,12 +945,15 @@
   <button class="nav-cta" onclick="scrollToBook()">Book Now</button>
 </nav>
 
+<section class="title-section">
 
-  
+  <div class="header-logo">Keys <span>Please</span> Valet</div>
+  <div class="subtitle">Premium Valet Management</div>
+
+</section>
+
 <!-- HERO -->
 <section class="hero">
-  <div class="header-logo">Keys <span>Please</span> Valet</div>
-  <div class="hero-eyebrow">Premium Valet Management</div>
 
   <div class="hero-left">
     <h1 class="hero-title">
