@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keys Please Valet — Live Vehicle Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:ital,wght@0,300;0,400;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root {
+    --obsidian:  #04030a;
+    --deep:      #0e0c18;
+    --surface:   #131120;
+    --choc:      #160b07;
+    --choc-hi:   #1e0f0a;
+    --off-white: #f0e8d8;
+    --parchment: #c8bfae;
+    --muted:     #7a7060;
+    --dim:       #3a3428;
+    --gold:      #c9991e;
+    --gold-hi:   #e8bb48;
+    --gold-dim:  #6a4e10;
+    --crimson:   #c8281a;
+    --green:     #2a7a4a;
+    --green-hi:  #48bb78;
+    --amber:     #e8921e;
+    --border:    rgba(201,153,30,0.2);
+    --border-s:  rgba(255,255,255,0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--obsidian);
+    color: var(--off-white);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(4,3,10,0.97);
+    backdrop-filter: blur(16px);
+    z-index: 1000;
+    flex-shrink: 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem; font-weight: 700;
+    text-decoration: none; color: var(--off-white);
+    letter-spacing: 0.02em;
+  }
+  .nav-logo em { font-style: italic; color: var(--gold-hi); }
+
+  .nav-center {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold);
+  }
+  .live-pill {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: rgba(42,122,74,0.15); border: 1px solid rgba(72,187,120,0.3);
+    padding: 0.25rem 0.65rem;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--green-hi);
+  }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green-hi); box-shadow: 0 0 8px var(--green-hi);
+    animation: blink 1.4s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
+
+  .nav-right { display: flex; align-items: center; gap: 1rem; }
+  .nav-link {
+    font-size: 0.62rem; font-weight: 600; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-link:hover { color: var(--gold-hi); }
+
+  /* ── MAIN LAYOUT ── */
+  .app {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E"),
+      linear-gradient(180deg, #0e0c18 0%, #08060f 100%);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 10;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  /* Token search */
+  .token-search {
+    padding: 1.25rem 1.25rem 0;
+  }
+  .ts-label {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.26em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .ts-label::before {
+    content: ''; display: block; width: 1.2rem; height: 1px;
+    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+  }
+  .ts-row { display: flex; gap: 0.5rem; }
+  .ts-input {
+    flex: 1; background: rgba(10,5,3,0.8);
+    border: 1px solid rgba(180,90,50,0.25); color: var(--off-white);
+    padding: 0.7rem 0.9rem; font-family: 'DM Mono', monospace;
+    font-size: 0.8rem; outline: none; text-transform: uppercase;
+    letter-spacing: 0.08em; transition: all 0.2s;
+  }
+  .ts-input:focus { border-color: rgba(210,130,70,0.65); background: rgba(30,12,6,0.9); }
+  .ts-input::placeholder { font-style: italic; text-transform: none; color: rgba(255,255,255,0.22); letter-spacing: 0; }
+  .ts-btn {
+    background: linear-gradient(135deg, var(--gold-hi) 0%, var(--gold) 100%);
+    color: var(--obsidian); border: none;
+    padding: 0.7rem 1rem; font-family: 'Syne', sans-serif;
+    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.16em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .ts-btn:hover { box-shadow: 0 4px 16px rgba(201,153,30,0.3); transform: translateY(-1px); }
+
+  /* Divider */
+  .s-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,153,30,0.25), transparent);
+    margin: 1.25rem 0;
+  }
+
+  /* Vehicle card */
+  .vehicle-card {
+    margin: 0 1.25rem;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+      linear-gradient(145deg, #1e0f0a 0%, #160b07 60%, #120907 100%);
+    border: 1px solid rgba(160,80,40,0.3);
+    box-shadow: inset 0 1px 0 rgba(220,130,80,0.1), 0 8px 24px rgba(0,0,0,0.4);
+    padding: 1.25rem;
+    position: relative;
+    display: none;
+  }
+  .vehicle-card.visible { display: block; }
+  .vehicle-card::before {
+    content: 'ACTIVE BOOKING';
+    position: absolute; top: -0.45rem; left: 1rem;
+    background: var(--choc); padding: 0 0.5rem;
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.26em; color: var(--gold);
+  }
+
+  .vc-token {
+    font-family: 'DM Mono', monospace; font-size: 0.9rem;
+    font-weight: 500; color: var(--gold-hi); letter-spacing: 0.08em;
+    margin-bottom: 0.3rem;
+    text-shadow: 0 0 20px rgba(201,153,30,0.3);
+  }
+  .vc-vehicle {
+    font-family: 'Playfair Display', serif; font-size: 1.15rem;
+    font-weight: 600; color: var(--off-white); margin-bottom: 0.2rem;
+  }
+  .vc-plate {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1rem;
+  }
+
+  .vc-fields { display: flex; flex-direction: column; gap: 0.4rem; }
+  .vc-field { display: flex; justify-content: space-between; align-items: baseline; }
+  .vc-key {
+    font-size: 0.56rem; font-weight: 600; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .vc-val {
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--parchment);
+  }
+  .vc-val.hi { color: var(--off-white); font-weight: 500; }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; padding: 0.25rem 0.65rem;
+    margin-top: 0.75rem; border: 1px solid;
+  }
+  .sb-parked   { color: var(--amber); border-color: rgba(232,146,30,0.4); background: rgba(184,106,16,0.12); }
+  .sb-moving   { color: var(--green-hi); border-color: rgba(72,187,120,0.4); background: rgba(42,122,74,0.12); }
+  .sb-arriving { color: var(--gold-hi); border-color: rgba(201,153,30,0.4); background: rgba(201,153,30,0.1); }
+
+  /* GPS stats row */
+  .gps-stats {
+    margin: 1.25rem 1.25rem 0;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .gps-stat {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-s);
+    padding: 0.75rem 0.6rem; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .gps-stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  }
+  .gps-stat.spd::before { background: linear-gradient(to right, transparent, var(--gold-hi), transparent); }
+  .gps-stat.dir::before { background: linear-gradient(to right, transparent, #6ab4e8, transparent); }
+  .gps-stat.eta::before { background: linear-gradient(to right, transparent, var(--green-hi), transparent); }
+  .gps-stat-val {
+    font-family: 'Playfair Display', serif; font-size: 1.3rem;
+    font-weight: 700; line-height: 1; color: var(--off-white);
+  }
+  .gps-stat-unit {
+    font-size: 0.5rem; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--muted); margin-top: 0.25rem;
+  }
+
+  /* Timeline */
+  .timeline {
+    margin: 1.25rem 1.25rem 0;
+  }
+  .tl-title {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 0.9rem;
+  }
+  .tl-items { display: flex; flex-direction: column; gap: 0; }
+  .tl-item {
+    display: flex; gap: 0.85rem; align-items: flex-start;
+    padding-bottom: 1rem; position: relative;
+  }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-dot-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0; padding-top: 0.15rem;
+  }
+  .tl-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid;
+  }
+  .tl-dot.done  { background: var(--green-hi); border-color: var(--green-hi); box-shadow: 0 0 8px rgba(72,187,120,0.4); }
+  .tl-dot.active{ background: var(--gold-hi); border-color: var(--gold-hi); box-shadow: 0 0 10px rgba(201,153,30,0.5); animation: tdpulse 1.5s infinite; }
+  .tl-dot.future{ background: transparent; border-color: var(--dim); }
+  @keyframes tdpulse { 0%,100%{box-shadow:0 0 8px rgba(201,153,30,0.4)} 50%{box-shadow:0 0 16px rgba(201,153,30,0.7)} }
+  .tl-line {
+    width: 1px; flex: 1; min-height: 20px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.1), rgba(255,255,255,0.03));
+    margin-top: 3px;
+  }
+  .tl-line.done-line { background: linear-gradient(to bottom, rgba(72,187,120,0.4), rgba(72,187,120,0.1)); }
+  .tl-text { }
+  .tl-event {
+    font-size: 0.72rem; font-weight: 600; color: var(--off-white); line-height: 1.3;
+  }
+  .tl-event.future { color: var(--dim); }
+  .tl-time {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); margin-top: 0.15rem;
+  }
+
+  /* Retrieve CTA */
+  .retrieve-cta {
+    margin: 1.25rem;
+  }
+  .btn-retrieve-full {
+    width: 100%;
+    background: linear-gradient(135deg, #d42e1a 0%, #a01e12 100%);
+    color: #fff; border: none; padding: 0.9rem;
+    font-family: 'Syne', sans-serif; font-size: 0.68rem;
+    font-weight: 800; letter-spacing: 0.22em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255,100,80,0.2);
+  }
+  .btn-retrieve-full:hover { box-shadow: 0 6px 24px rgba(200,40,26,0.35); transform: translateY(-1px); }
+  .btn-retrieve-full:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .no-booking {
+    margin: 1.25rem; padding: 2rem 1.25rem;
+    border: 1px dashed var(--border-s); text-align: center;
+  }
+  .no-booking-icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.3; }
+  .no-booking-title {
+    font-family: 'Playfair Display', serif; font-size: 1rem;
+    font-weight: 500; color: var(--parchment); margin-bottom: 0.5rem;
+  }
+  .no-booking-sub {
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); line-height: 1.7;
+  }
+
+  /* ── MAP ── */
+  .map-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #map {
+    width: 100%; height: 100%;
+    background: #0a0814;
+  }
+
+  /* Dark map overlay controls */
+  .map-overlay-top {
+    position: absolute; top: 1rem; right: 1rem; z-index: 500;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .map-btn {
+    background: rgba(4,3,10,0.92); border: 1px solid var(--border-s);
+    color: var(--parchment); width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .map-btn:hover { border-color: var(--border); color: var(--gold-hi); }
+
+  .map-info-bar {
+    position: absolute; bottom: 1.25rem; left: 50%;
+    transform: translateX(-50%); z-index: 500;
+    background: rgba(4,3,10,0.92);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(12px);
+    padding: 0.6rem 1.5rem;
+    display: flex; align-items: center; gap: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    white-space: nowrap;
+  }
+  .mib-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.62rem;
+  }
+  .mib-key {
+    font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .mib-val {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--off-white);
+  }
+  .mib-sep { color: var(--dim); }
+
+  /* Leaflet overrides for dark theme */
+  .leaflet-tile { filter: brightness(0.25) saturate(0.3) hue-rotate(195deg); }
+  .leaflet-control-zoom { border: 1px solid var(--border-s) !important; }
+  .leaflet-control-zoom a {
+    background: rgba(4,3,10,0.92) !important; color: var(--parchment) !important;
+    border: none !important; border-bottom: 1px solid var(--border-s) !important;
+    backdrop-filter: blur(8px);
+    transition: color 0.2s !important;
+  }
+  .leaflet-control-zoom a:hover { color: var(--gold-hi) !important; background: rgba(20,18,30,0.95) !important; }
+  .leaflet-bar { border: none !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+
+  /* Custom marker */
+  .car-marker-wrap {
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .car-pulse {
+    position: absolute;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(201,153,30,0.15);
+    border: 1px solid rgba(201,153,30,0.3);
+    animation: carPulse 2s ease-out infinite;
+  }
+  @keyframes carPulse {
+    0%   { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2);   opacity: 0; }
+  }
+  .car-pin {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-hi) 0%, var(--gold) 100%);
+    border: 2px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; position: relative; z-index: 1;
+    box-shadow: 0 4px 16px rgba(201,153,30,0.5), 0 0 0 4px rgba(201,153,30,0.12);
+  }
+
+  /* Venue marker */
+  .venue-pin {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #d42e1a 0%, #a01e12 100%);
+    border: 2px solid rgba(255,100,80,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 12px rgba(200,40,26,0.4);
+  }
+
+  /* Accuracy circle override */
+  .leaflet-interactive { stroke: rgba(201,153,30,0.4) !important; fill: rgba(201,153,30,0.06) !important; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem; z-index: 2000;
+    background: linear-gradient(135deg, #13112a 0%, #08060f 100%);
+    border: 1px solid var(--gold-hi); padding: 0.9rem 1.4rem;
+    transform: translateY(80px); opacity: 0; transition: all 0.3s ease;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6); max-width: 300px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-title { color: var(--gold-hi); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.25rem; }
+  .toast-msg { color: var(--off-white); font-family: 'DM Mono', monospace; font-size: 0.7rem; line-height: 1.5; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: 260px; flex-shrink: 0; overflow-x: auto; overflow-y: hidden; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); }
+    .map-wrap { flex: 1; min-height: 0; }
+    .gps-stats { margin-top: 0.75rem; }
+    .map-info-bar { font-size: 0.58rem; padding: 0.5rem 1rem; gap: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="keys-please-valet.html">Keys <em>Please</em> Valet</a>
+  <div class="nav-center">
+    <span>Live GPS Tracker</span>
+    <div class="live-pill"><div class="live-dot"></div>Live</div>
+  </div>
+  <div class="nav-right">
+    <a class="nav-link" href="kpv-portal.html">My Account</a>
+    <a class="nav-link" href="keys-please-valet.html">Book</a>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- Token search -->
+    <div class="token-search">
+      <div class="ts-label">Track by Token</div>
+      <div class="ts-row">
+        <input class="ts-input" id="tokenInput" type="text" placeholder="e.g. KPV-ABC1234" maxlength="12">
+        <button class="ts-btn" onclick="loadToken()">Track →</button>
+      </div>
+    </div>
+
+    <div class="s-divider"></div>
+
+    <!-- No booking placeholder -->
+    <div class="no-booking" id="noBooking">
+      <div class="no-booking-icon">🛰️</div>
+      <div class="no-booking-title">Enter your token</div>
+      <div class="no-booking-sub">Enter a valet token above to<br>begin live tracking your vehicle.</div>
+    </div>
+
+    <!-- Vehicle card (hidden until token loaded) -->
+    <div class="vehicle-card" id="vehicleCard">
+      <div class="vc-token" id="vcToken">—</div>
+      <div class="vc-vehicle" id="vcVehicle">—</div>
+      <div class="vc-plate" id="vcPlate">—</div>
+      <div class="vc-fields">
+        <div class="vc-field"><span class="vc-key">Venue</span><span class="vc-val" id="vcVenue">—</span></div>
+        <div class="vc-field"><span class="vc-key">Guest</span><span class="vc-val" id="vcGuest">—</span></div>
+        <div class="vc-field"><span class="vc-key">Date</span><span class="vc-val" id="vcDate">—</span></div>
+        <div class="vc-field"><span class="vc-key">Tier</span><span class="vc-val hi" id="vcTier">—</span></div>
+      </div>
+      <div class="status-badge sb-parked" id="vcStatus"><span>⬤</span> Securely Parked</div>
+    </div>
+
+    <!-- GPS stats -->
+    <div class="gps-stats" id="gpsStats" style="display:none;">
+      <div class="gps-stat spd">
+        <div class="gps-stat-val" id="gpsSpeed">0</div>
+        <div class="gps-stat-unit">mph</div>
+      </div>
+      <div class="gps-stat dir">
+        <div class="gps-stat-val" id="gpsHeading">N</div>
+        <div class="gps-stat-unit">heading</div>
+      </div>
+      <div class="gps-stat eta">
+        <div class="gps-stat-val" id="gpsEta">—</div>
+        <div class="gps-stat-unit">eta</div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline" id="timeline" style="display:none;">
+      <div class="tl-title">Journey Timeline</div>
+      <div class="tl-items" id="tlItems"></div>
+    </div>
+
+    <!-- Retrieve CTA -->
+    <div class="retrieve-cta" id="retrieveCta" style="display:none;">
+      <button class="btn-retrieve-full" id="retrieveBtn" onclick="requestRetrieval()">
+        🚗 &nbsp;Request Vehicle Retrieval
+      </button>
+      <p style="font-family:'Crimson Pro',serif;font-size:0.82rem;color:var(--muted);margin-top:0.6rem;line-height:1.6;text-align:center;">
+        Ready to leave? We'll have your car at the entrance in ~4 minutes.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <div id="map"></div>
+
+    <!-- Map overlay buttons -->
+    <div class="map-overlay-top">
+      <button class="map-btn" onclick="centerOnCar()" title="Center on vehicle">🎯</button>
+      <button class="map-btn" onclick="toggleSatellite()" title="Toggle layer" id="layerBtn">🗺️</button>
+      <button class="map-btn" onclick="toggleRoute()" title="Toggle route" id="routeBtn">〰️</button>
+    </div>
+
+    <!-- Info bar -->
+    <div class="map-info-bar" id="mapInfoBar" style="display:none;">
+      <div class="mib-item"><span class="mib-key">Coords</span><span class="mib-val" id="mibCoords">—</span></div>
+      <span class="mib-sep">·</span>
+      <div class="mib-item"><span class="mib-key">Accuracy</span><span class="mib-val" id="mibAcc">—</span></div>
+      <span class="mib-sep">·</span>
+      <div class="mib-item"><span class="mib-key">Last Update</span><span class="mib-val" id="mibTime">—</span></div>
+      <span class="mib-sep">·</span>
+      <div class="mib-item"><span class="mib-key">Distance</span><span class="mib-val" id="mibDist">—</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle"></div>
+  <div class="toast-msg"  id="toastMsg"></div>
+</div>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────────
+const BOOKINGS_KEY = 'kpv_bookings';
+const UPDATE_MS    = 2000; // GPS update interval
+
+// ── Map init ─────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  zoomControl: true,
+  attributionControl: false,
+  zoomAnimation: true,
+});
+
+// Default tile layer (dark)
+const darkTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, attribution: '© OpenStreetMap'
+}).addTo(map);
+
+const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  maxZoom: 19, attribution: '© Esri'
+});
+
+let useSat = false;
+function toggleSatellite() {
+  useSat = !useSat;
+  if (useSat) { map.removeLayer(darkTile); satTile.addTo(map); document.getElementById('layerBtn').textContent = '🌍'; }
+  else        { map.removeLayer(satTile); darkTile.addTo(map); document.getElementById('layerBtn').textContent = '🗺️'; }
+}
+
+// Default view – NYC area
+map.setView([40.7580, -73.9855], 14);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let carMarker      = null;
+let venueMarker    = null;
+let accuracyCircle = null;
+let routePolyline  = null;
+let crumbPolyline  = null;
+let trackInterval  = null;
+let showRoute      = true;
+let activeBooking  = null;
+let simState       = null; // simulation state
+
+// ── Simulation engine ────────────────────────────────────────────────────────
+// Creates a realistic valet journey: park lot → street → venue entrance
+function createSimulation(venueCoords) {
+  const [vLat, vLng] = venueCoords;
+
+  // Build a route: parking lot (offset) → a couple waypoints → venue
+  const lotLat  = vLat  + (Math.random() * 0.008 + 0.004) * (Math.random() < 0.5 ? 1 : -1);
+  const lotLng  = vLng  + (Math.random() * 0.010 + 0.005) * (Math.random() < 0.5 ? 1 : -1);
+
+  // Intermediate waypoints to simulate driving
+  const wp1Lat = lotLat  + (vLat  - lotLat)  * 0.35 + (Math.random()-0.5)*0.001;
+  const wp1Lng = lotLng  + (vLng  - lotLng)  * 0.35 + (Math.random()-0.5)*0.001;
+  const wp2Lat = lotLat  + (vLat  - lotLat)  * 0.65 + (Math.random()-0.5)*0.001;
+  const wp2Lng = lotLng  + (vLng  - lotLng)  * 0.65 + (Math.random()-0.5)*0.001;
+
+  const waypoints = [
+    [lotLat,  lotLng ],   // 0 - parking lot
+    [wp1Lat,  wp1Lng ],   // 1 - turning onto street
+    [wp2Lat,  wp2Lng ],   // 2 - approaching
+    [vLat,    vLng   ],   // 3 - venue entrance
+  ];
+
+  return {
+    waypoints,
+    venueCoords,
+    phase: 'parked',  // parked | moving | arriving | retrieved
+    segment: 0,       // which waypoint pair we're on
+    progress: 0,      // 0-1 within segment
+    speed: 0,
+    heading: 'N',
+    crumbs: [[lotLat, lotLng]],
+    retrievalRequested: false,
+    ticksParked: 0,
+  };
+}
+
+function latlngInterp(a, b, t) {
+  return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
+}
+
+function bearing(a, b) {
+  const dLng = (b[1]-a[1]) * Math.PI/180;
+  const lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
+  const y = Math.sin(dLng)*Math.cos(lat2);
+  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
+  const deg = ((Math.atan2(y,x)*180/Math.PI)+360)%360;
+  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+  return dirs[Math.round(deg/45)%8];
+}
+
+function tickSim() {
+  if (!simState) return;
+  const s = simState;
+  const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  if (s.phase === 'parked') {
+    s.ticksParked++;
+    // After 3 ticks if retrieval requested, start moving
+    if (s.retrievalRequested && s.ticksParked >= 3) {
+      s.phase = 'moving';
+      s.segment = 0;
+      s.progress = 0;
+      updateVehicleStatusBadge('moving');
+      showToast('Vehicle En Route', 'Your car has left the parking area.');
+      updateTimeline('moving');
+    }
+    // Update coords with tiny jitter (parking lot sway)
+    const cur = s.waypoints[0];
+    const jitterLat = cur[0] + (Math.random()-0.5)*0.00003;
+    const jitterLng = cur[1] + (Math.random()-0.5)*0.00003;
+    updateCarPosition([jitterLat, jitterLng], 0, '—', '~4 min', now, 2 + Math.random()*3);
+  }
+
+  else if (s.phase === 'moving') {
+    const from = s.waypoints[s.segment];
+    const to   = s.waypoints[s.segment+1];
+    s.progress += 0.045 + Math.random()*0.03;
+
+    if (s.progress >= 1) {
+      s.progress = 0;
+      s.segment++;
+      if (s.segment >= s.waypoints.length-1) {
+        s.phase = 'arriving';
+        updateVehicleStatusBadge('arriving');
+        updateTimeline('arriving');
+        showToast('Almost There!', 'Your vehicle is arriving at the entrance.');
+      }
+    }
+
+    const t = Math.min(s.progress, 1);
+    const pos = latlngInterp(from, to, t);
+    s.crumbs.push(pos);
+    const spd = Math.round(8 + Math.random()*12);
+    const hdg = bearing(from, to);
+    const segsLeft = (s.waypoints.length-1) - s.segment - t;
+    const etaMins  = Math.max(1, Math.round(segsLeft * 1.5));
+    s.speed = spd; s.heading = hdg;
+    updateCarPosition(pos, spd, hdg, etaMins + ' min', now, 3 + Math.random()*5);
+    updateCrumbs(s.crumbs);
+  }
+
+  else if (s.phase === 'arriving') {
+    const pos = s.waypoints[s.waypoints.length-1];
+    const jitterLat = pos[0] + (Math.random()-0.5)*0.00002;
+    const jitterLng = pos[1] + (Math.random()-0.5)*0.00002;
+    updateCarPosition([jitterLat, jitterLng], 0, '—', 'Now', now, 1 + Math.random()*2);
+    // After arriving, disable retrieve btn
+    document.getElementById('retrieveBtn').disabled = true;
+    document.getElementById('retrieveBtn').textContent = '✓ Vehicle at Entrance';
+    setTimeout(() => {
+      s.phase = 'retrieved';
+      updateVehicleStatusBadge('parked');
+      updateTimeline('retrieved');
+      clearInterval(trackInterval);
+    }, 8000);
+  }
+}
+
+// ── Marker helpers ────────────────────────────────────────────────────────────
+function makeCarIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div class="car-marker-wrap"><div class="car-pulse"></div><div class="car-pin">🚗</div></div>`,
+    iconSize: [48, 48], iconAnchor: [24, 24],
+  });
+}
+
+function makeVenueIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div class="venue-pin">📍</div>`,
+    iconSize: [28, 28], iconAnchor: [14, 14],
+  });
+}
+
+function updateCarPosition(pos, speed, heading, eta, time, acc) {
+  if (!carMarker) {
+    carMarker = L.marker(pos, { icon: makeCarIcon(), zIndexOffset: 1000 }).addTo(map);
+  } else {
+    carMarker.setLatLng(pos);
+  }
+  if (!accuracyCircle) {
+    accuracyCircle = L.circle(pos, { radius: acc*10, weight: 1 }).addTo(map);
+  } else {
+    accuracyCircle.setLatLng(pos).setRadius(acc*10);
+  }
+
+  // Info bar
+  document.getElementById('mibCoords').textContent = pos[0].toFixed(5) + ', ' + pos[1].toFixed(5);
+  document.getElementById('mibAcc').textContent    = '±' + Math.round(acc*10) + 'm';
+  document.getElementById('mibTime').textContent   = time;
+  if (venueMarker) {
+    const dist = map.distance(pos, venueMarker.getLatLng());
+    document.getElementById('mibDist').textContent = dist > 1000 ? (dist/1000).toFixed(2)+'km' : Math.round(dist)+'m';
+  }
+
+  // GPS stats
+  document.getElementById('gpsSpeed').textContent   = speed;
+  document.getElementById('gpsHeading').textContent = heading;
+  document.getElementById('gpsEta').textContent     = eta;
+}
+
+function updateCrumbs(crumbs) {
+  if (crumbPolyline) map.removeLayer(crumbPolyline);
+  if (crumbs.length < 2) return;
+  crumbPolyline = L.polyline(crumbs, {
+    color: 'rgba(201,153,30,0.4)', weight: 2, dashArray: '4,6'
+  }).addTo(map);
+}
+
+function centerOnCar() {
+  if (carMarker) map.setView(carMarker.getLatLng(), 16, { animate: true });
+}
+
+function toggleRoute() {
+  showRoute = !showRoute;
+  if (routePolyline) routePolyline.setStyle({ opacity: showRoute ? 0.5 : 0 });
+  document.getElementById('routeBtn').textContent = showRoute ? '〰️' : '—';
+}
+
+// ── Token lookup & tracking start ─────────────────────────────────────────────
+const VENUE_COORDS = {
+  'The Grand Ballroom':   [40.7614, -73.9776],
+  'Harborview Hotel':     [40.7527, -74.0052],
+  'Meridian Country Club':[40.7831, -73.9712],
+  'The Foundry':          [40.7441, -74.0055],
+};
+
+function loadToken() {
+  const raw = document.getElementById('tokenInput').value.trim().toUpperCase();
+  if (!raw) { showToast('Error', 'Please enter a valet token.'); return; }
+
+  // Look up booking
+  let booking = null;
+  try { booking = JSON.parse(localStorage.getItem(BOOKINGS_KEY)||'[]').find(b => b.id === raw); } catch(e){}
+
+  if (!booking) {
+    // Demo mode – generate a mock booking
+    booking = {
+      id: raw,
+      guest: { firstName: 'Demo', lastName: 'Guest' },
+      venue: 'The Grand Ballroom',
+      tier: 'Standard Valet',
+      total: 35,
+      status: 'confirmed',
+      schedule: { date: new Date().toLocaleDateString(), arrival: '7:30 PM' },
+      vehicle: { make: 'Mercedes', model: 'E-Class', year: '2023', color: 'Obsidian Black', plate: 'KPV-DEMO' }
+    };
+    showToast('Demo Mode', 'Showing simulated tracking for ' + raw);
+  }
+
+  if (booking.status === 'cancelled') {
+    showToast('Cancelled', 'This booking has been cancelled.'); return;
+  }
+
+  activeBooking = booking;
+  startTracking(booking);
+}
+
+function startTracking(booking) {
+  // Stop any existing simulation
+  if (trackInterval) clearInterval(trackInterval);
+  if (carMarker)     { map.removeLayer(carMarker); carMarker = null; }
+  if (venueMarker)   { map.removeLayer(venueMarker); venueMarker = null; }
+  if (accuracyCircle){ map.removeLayer(accuracyCircle); accuracyCircle = null; }
+  if (crumbPolyline) { map.removeLayer(crumbPolyline); crumbPolyline = null; }
+  if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+
+  // Populate sidebar
+  const vehicle = [booking.vehicle?.year, booking.vehicle?.color, booking.vehicle?.make, booking.vehicle?.model].filter(Boolean).join(' ') || '—';
+  document.getElementById('vcToken').textContent   = booking.id;
+  document.getElementById('vcVehicle').textContent = vehicle;
+  document.getElementById('vcPlate').textContent   = '🔖 ' + (booking.vehicle?.plate || '—');
+  document.getElementById('vcVenue').textContent   = booking.venue || '—';
+  document.getElementById('vcGuest').textContent   = [booking.guest?.firstName, booking.guest?.lastName].filter(Boolean).join(' ') || '—';
+  document.getElementById('vcDate').textContent    = booking.schedule?.date || '—';
+  document.getElementById('vcTier').textContent    = booking.tier || '—';
+
+  document.getElementById('noBooking').style.display  = 'none';
+  document.getElementById('vehicleCard').classList.add('visible');
+  document.getElementById('gpsStats').style.display   = 'grid';
+  document.getElementById('timeline').style.display   = 'block';
+  document.getElementById('retrieveCta').style.display= 'block';
+  document.getElementById('mapInfoBar').style.display = 'flex';
+  document.getElementById('retrieveBtn').disabled     = false;
+  document.getElementById('retrieveBtn').textContent  = '🚗   Request Vehicle Retrieval';
+
+  // Venue on map
+  const venueCoords = VENUE_COORDS[booking.venue] || [40.7580, -73.9855];
+  venueMarker = L.marker(venueCoords, { icon: makeVenueIcon() })
+    .bindPopup(`<b style="font-family:sans-serif;font-size:12px;color:#333">${booking.venue || 'Venue'}</b>`)
+    .addTo(map);
+
+  // Build simulation
+  simState = createSimulation(venueCoords);
+
+  // Draw intended route
+  routePolyline = L.polyline(simState.waypoints, {
+    color: 'rgba(201,153,30,0.5)', weight: 3, dashArray: '8,10'
+  }).addTo(map);
+
+  // Place car at parking lot immediately
+  const lotPos = simState.waypoints[0];
+  carMarker = L.marker(lotPos, { icon: makeCarIcon(), zIndexOffset: 1000 }).addTo(map);
+  accuracyCircle = L.circle(lotPos, { radius: 20, weight: 1 }).addTo(map);
+
+  // Fit map to route
+  map.fitBounds(L.latLngBounds(simState.waypoints).pad(0.2), { animate: true });
+
+  // Timeline
+  updateTimeline('parked');
+
+  // Start ticking
+  trackInterval = setInterval(tickSim, UPDATE_MS);
+  showToast('Tracking Active', 'Live GPS enabled for ' + booking.id);
+}
+
+// ── Timeline ─────────────────────────────────────────────────────────────────
+const TL_EVENTS = [
+  { key: 'checked_in', label: 'Vehicle Checked In',    icon: '✓' },
+  { key: 'parked',     label: 'Securely Parked',       icon: '🅿️' },
+  { key: 'moving',     label: 'Retrieval in Progress', icon: '🚗' },
+  { key: 'arriving',   label: 'Arriving at Entrance',  icon: '📍' },
+  { key: 'retrieved',  label: 'Vehicle Delivered',     icon: '🏁' },
+];
+
+function updateTimeline(phase) {
+  const phases = ['checked_in','parked','moving','arriving','retrieved'];
+  const current = phases.indexOf(phase);
+  const container = document.getElementById('tlItems');
+  container.innerHTML = TL_EVENTS.map((ev, i) => {
+    const isDone   = i < current;
+    const isActive = i === current;
+    const isFuture = i > current;
+    const dotClass = isDone ? 'done' : isActive ? 'active' : 'future';
+    const lineClass = isDone ? 'done-line' : '';
+    const time = isActive ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : isDone ? '✓' : '';
+    return `
+      <div class="tl-item">
+        <div class="tl-dot-wrap">
+          <div class="tl-dot ${dotClass}"></div>
+          ${i < TL_EVENTS.length-1 ? `<div class="tl-line ${lineClass}"></div>` : ''}
+        </div>
+        <div class="tl-text">
+          <div class="tl-event ${isFuture?'future':''}">${ev.icon} ${ev.label}</div>
+          ${time ? `<div class="tl-time">${time}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateVehicleStatusBadge(phase) {
+  const el = document.getElementById('vcStatus');
+  if (phase === 'moving') {
+    el.className = 'status-badge sb-moving'; el.innerHTML = '<span>⬤</span> En Route to Entrance';
+  } else if (phase === 'arriving') {
+    el.className = 'status-badge sb-arriving'; el.innerHTML = '<span>⬤</span> Arriving Now';
+  } else {
+    el.className = 'status-badge sb-parked'; el.innerHTML = '<span>⬤</span> Securely Parked';
+  }
+}
+
+// ── Retrieval request ────────────────────────────────────────────────────────
+function requestRetrieval() {
+  if (!simState) { showToast('No Active Booking', 'Load a token first.'); return; }
+  simState.retrievalRequested = true;
+  document.getElementById('retrieveBtn').textContent = '⏳  Valet Notified — En Route…';
+  document.getElementById('retrieveBtn').style.background = 'linear-gradient(135deg, #b06010 0%, #784010 100%)';
+  showToast('Request Sent!', 'Your valet has been notified. Vehicle en route in moments.');
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(title, msg) {
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent   = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+// ── Auto-load token from URL (?token=KPV-XXX) ────────────────────────────────
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const tok    = params.get('token');
+  if (tok) {
+    document.getElementById('tokenInput').value = tok.toUpperCase();
+    setTimeout(loadToken, 600);
+  }
+})();
+</script>
+</body>
+</html>
