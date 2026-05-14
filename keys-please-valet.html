@@ -949,6 +949,172 @@
     padding-top: 0;
   }
 
+
+  /* ---- PAYMENT STEP ---- */
+  .pay-method-tabs {
+    display: flex; gap: 0; margin-bottom: 1.75rem;
+    border-bottom: 1px solid rgba(160,80,40,0.25);
+    flex-wrap: wrap;
+  }
+  .pay-tab {
+    flex: 1; min-width: 80px;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; padding: 0.65rem 0.5rem;
+    font-family: 'Syne', sans-serif; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 0.35rem;
+  }
+  .pay-tab:hover { color: var(--off-white); }
+  .pay-tab.active { color: var(--gold-hi, #e8bb48); border-bottom-color: var(--gold-hi, #e8bb48); }
+  .pay-tab-icon { font-size: 0.9rem; }
+
+  .pay-panel { display: none; }
+  .pay-panel.active { display: block; animation: fadeUp 0.25s ease; }
+
+  /* Card preview */
+  .pay-card-preview {
+    background: linear-gradient(135deg, #1e0f0a 0%, #2a1a08 50%, #1a0d05 100%);
+    border: 1px solid rgba(212,168,67,0.3);
+    box-shadow: inset 0 1px 0 rgba(212,168,67,0.15), 0 8px 32px rgba(0,0,0,0.5);
+    border-radius: 2px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 130px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .pay-card-preview::before {
+    content: '';
+    position: absolute; top: -40px; right: -20px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: rgba(212,168,67,0.08);
+  }
+  .pay-card-preview::after {
+    content: '';
+    position: absolute; top: -20px; right: 50px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(232,50,31,0.06);
+  }
+  .pcp-chip {
+    font-size: 0.85rem; color: var(--gold, #d4a843);
+    letter-spacing: 0.06em; opacity: 0.8;
+  }
+  .pcp-number {
+    font-family: 'DM Mono', monospace; font-size: 1.1rem;
+    letter-spacing: 0.22em; color: var(--off-white);
+    margin: 0.5rem 0; word-spacing: 0.5em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .pcp-bottom {
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .pcp-lbl {
+    font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); margin-bottom: 0.15rem;
+  }
+  .pcp-val {
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    letter-spacing: 0.1em; color: var(--off-white);
+  }
+
+  /* Secure note */
+  .pay-secure-note {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); text-align: center; margin-top: 1rem;
+    padding: 0.6rem; border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02); letter-spacing: 0.04em;
+  }
+
+  /* Wallet panels */
+  .pay-wallet-box {
+    text-align: center; padding: 1rem 0.5rem;
+  }
+  .pwb-icon {
+    width: 64px; height: 64px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 1.4rem; color: #fff;
+    margin: 0 auto 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .pwb-title {
+    font-family: 'Playfair Display', serif; font-size: 1.3rem;
+    font-weight: 600; color: var(--off-white); margin-bottom: 0.5rem;
+  }
+  .pwb-sub {
+    font-family: 'Crimson Pro', serif; font-size: 0.95rem;
+    color: var(--mid); line-height: 1.7; margin-bottom: 1.25rem;
+    max-width: 300px; margin-left: auto; margin-right: auto;
+  }
+  .pwb-amount {
+    font-family: 'Playfair Display', serif; font-size: 2.2rem;
+    font-weight: 700; color: var(--gold, #d4a843);
+    margin-bottom: 1.25rem;
+    text-shadow: 0 0 20px rgba(212,168,67,0.25);
+  }
+  .pwb-btn {
+    width: 100%; max-width: 320px;
+    padding: 0.9rem 2rem; border: none; cursor: pointer;
+    font-family: 'Syne', sans-serif; font-size: 0.75rem;
+    font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    transition: all 0.2s; display: flex; align-items: center;
+    justify-content: center; gap: 0.5rem;
+    margin: 0 auto 1rem;
+  }
+  .pwb-apple  { background: #000; color: #fff; }
+  .pwb-apple:hover  { background: #222; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+  .pwb-google { background: #fff; color: #3c4043; }
+  .pwb-google:hover { background: #f8f8f8; box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+  .pwb-paypal { background: #ffc439; color: #003087; }
+  .pwb-paypal:hover { background: #f5b800; box-shadow: 0 6px 24px rgba(0,48,135,0.2); }
+  .pwb-note {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); line-height: 1.6; margin-top: 0.5rem;
+  }
+
+  .pwb-arrival-note {
+    max-width: 280px; margin: 0 auto;
+    text-align: left; display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .pwan-item {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem;
+    color: var(--parchment, #c8bfae); line-height: 1.5;
+  }
+
+  /* Pay summary strip */
+  .pay-summary-strip {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid var(--border);
+    background: rgba(212,168,67,0.04);
+    padding: 0.9rem 1.25rem; margin-top: 1.5rem;
+  }
+  .pss-label {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem;
+  }
+  .pss-total {
+    font-family: 'Playfair Display', serif; font-size: 1.6rem;
+    font-weight: 700; color: var(--gold, #d4a843);
+  }
+  .pss-method {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem;
+    color: var(--parchment, #c8bfae); text-align: right;
+  }
+
+  /* Processing animation */
+  .pay-processing {
+    text-align: center; padding: 2rem 0;
+  }
+  .pay-spinner {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 3px solid rgba(212,168,67,0.15);
+    border-top-color: var(--gold, #d4a843);
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
 </style>
 </head>
 <body>
@@ -960,7 +1126,7 @@
     <li><a href="#book">Book</a></li>
     <li><a href="#how">How It Works</a></li>
     <li><a href="kpv-track.html">Track Vehicle</a></li>
-    <li><a href="#">Venues</a></li>
+    <li><a href="#book">Venues</a></li>
     <li><a href="kpv-portal.html" style="color:var(--gold-hi)">My Account</a></li>
   </ul>
   <button class="nav-cta" onclick="scrollToBook()">Book Now</button>
@@ -1105,6 +1271,10 @@
         <span class="step-num">04</span>
         <span class="step-label">Guest</span>
       </button>
+      <button class="step-btn" data-step="5">
+        <span class="step-num">05</span>
+        <span class="step-label">Payment</span>
+      </button>
       <div class="step-progress" id="stepProgress"></div>
     </div>
 
@@ -1115,22 +1285,22 @@
         <div class="venue-grid">
           <div class="venue-card selected" onclick="selectVenue(this, 'The Grand Ballroom', 35)">
             <div class="venue-name">The Grand Ballroom</div>
-            <div class="venue-type">Wedding · Gala · Conference</div>
+            <div class="venue-type">Downtown Louisville · Gala · Conference</div>
             <div class="venue-price">$35</div>
           </div>
           <div class="venue-card" onclick="selectVenue(this, 'Harborview Hotel', 28)">
             <div class="venue-name">Harborview Hotel</div>
-            <div class="venue-type">Hotel · Restaurant</div>
+            <div class="venue-type">Waterfront · NuLu · Restaurant</div>
             <div class="venue-price">$28</div>
           </div>
           <div class="venue-card" onclick="selectVenue(this, 'Meridian Country Club', 45)">
             <div class="venue-name">Meridian Country Club</div>
-            <div class="venue-type">Private Club · Events</div>
+            <div class="venue-type">Anchorage · Oldham County · Private Club</div>
             <div class="venue-price">$45</div>
           </div>
           <div class="venue-card" onclick="selectVenue(this, 'The Foundry', 22)">
             <div class="venue-name">The Foundry</div>
-            <div class="venue-type">Rooftop · Bar · Events</div>
+            <div class="venue-type">Old Louisville · NuLu · Rooftop</div>
             <div class="venue-price">$22</div>
           </div>
         </div>
@@ -1313,8 +1483,158 @@
       </div>
     </div>
 
-    <!-- Step 5: Confirmation -->
+    <!-- Step 5: Payment -->
     <div class="form-panel" id="panel-5">
+
+      <div class="pay-method-tabs" id="payTabs">
+        <button class="pay-tab active" onclick="selectPayTab(this,'card')" data-method="card">
+          <span class="pay-tab-icon">&#x1F4B3;</span> Card
+        </button>
+        <button class="pay-tab" onclick="selectPayTab(this,'apple')" data-method="apple">
+          <span class="pay-tab-icon">&#xF8FF;</span> Apple Pay
+        </button>
+        <button class="pay-tab" onclick="selectPayTab(this,'google')" data-method="google">
+          <span class="pay-tab-icon">&#9679;</span> Google Pay
+        </button>
+        <button class="pay-tab" onclick="selectPayTab(this,'paypal')" data-method="paypal">
+          <span class="pay-tab-icon">P</span> PayPal
+        </button>
+        <button class="pay-tab" onclick="selectPayTab(this,'arrival')" data-method="arrival">
+          <span class="pay-tab-icon">&#128181;</span> On Arrival
+        </button>
+      </div>
+
+      <!-- CARD PANEL -->
+      <div class="pay-panel active" id="pay-card">
+        <div class="pay-card-preview">
+          <div class="pcp-chip">&#9632;&#9632;</div>
+          <div class="pcp-number" id="pcpNum">•••• •••• •••• ••••</div>
+          <div class="pcp-bottom">
+            <div>
+              <div class="pcp-lbl">Card Holder</div>
+              <div class="pcp-val" id="pcpName">YOUR NAME</div>
+            </div>
+            <div>
+              <div class="pcp-lbl">Expires</div>
+              <div class="pcp-val" id="pcpExp">MM / YY</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Card Number</label>
+          <input type="text" id="cardNumber" maxlength="19" placeholder="1234 5678 9012 3456"
+            oninput="fmtCard(this)" onkeypress="return /[0-9 ]/.test(event.key)">
+          <div class="field-error" id="cardNumErr">Please enter a valid 16-digit card number</div>
+        </div>
+        <div class="field-group">
+          <label>Name on Card</label>
+          <input type="text" id="cardName" placeholder="James Morrison"
+            oninput="document.getElementById('pcpName').textContent=this.value.toUpperCase()||'YOUR NAME'">
+          <div class="field-error" id="cardNameErr">Name is required</div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Expiry Date</label>
+            <input type="text" id="cardExpiry" maxlength="7" placeholder="MM / YY"
+              oninput="fmtExpiry(this)" onkeypress="return /[0-9\/]/.test(event.key)">
+            <div class="field-error" id="cardExpErr">Invalid expiry date</div>
+          </div>
+          <div class="field-group">
+            <label>CVV / CVC</label>
+            <input type="password" id="cardCvv" maxlength="4" placeholder="•••"
+              onkeypress="return /[0-9]/.test(event.key)">
+            <div class="field-error" id="cardCvvErr">Enter 3 or 4 digit CVV</div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Billing ZIP / Postal Code</label>
+          <input type="text" id="cardZip" maxlength="10" placeholder="40202">
+        </div>
+        <div class="pay-secure-note">
+          <span>&#128274;</span> 256-bit SSL encrypted &nbsp;&bull;&nbsp; Powered by Stripe &nbsp;&bull;&nbsp; PCI DSS compliant
+        </div>
+      </div>
+
+      <!-- APPLE PAY PANEL -->
+      <div class="pay-panel" id="pay-apple">
+        <div class="pay-wallet-box">
+          <div class="pwb-icon" style="background:#000;color:#fff;font-size:1.8rem"> &#xF8FF;</div>
+          <div class="pwb-title">Apple Pay</div>
+          <div class="pwb-sub">Complete your payment using Touch ID, Face ID, or your device passcode.</div>
+          <div class="pwb-amount" id="appleAmount">$35</div>
+          <button class="pwb-btn pwb-apple" onclick="processWallet('Apple Pay')">
+            <span style="font-size:1.1rem">&#xF8FF;</span> &nbsp; Pay with Apple Pay
+          </button>
+          <div class="pwb-note">Requires Safari on Apple device with Apple Pay configured.</div>
+        </div>
+      </div>
+
+      <!-- GOOGLE PAY PANEL -->
+      <div class="pay-panel" id="pay-google">
+        <div class="pay-wallet-box">
+          <div class="pwb-icon" style="background:linear-gradient(135deg,#4285F4,#34A853,#FBBC05,#EA4335)">G</div>
+          <div class="pwb-title">Google Pay</div>
+          <div class="pwb-sub">Use your saved Google Pay cards for a fast, secure checkout.</div>
+          <div class="pwb-amount" id="googleAmount">$35</div>
+          <button class="pwb-btn pwb-google" onclick="processWallet('Google Pay')">
+            <span>G</span> &nbsp; Pay with Google Pay
+          </button>
+          <div class="pwb-note">Requires Chrome or Android with Google Pay set up.</div>
+        </div>
+      </div>
+
+      <!-- PAYPAL PANEL -->
+      <div class="pay-panel" id="pay-paypal">
+        <div class="pay-wallet-box">
+          <div class="pwb-icon" style="background:#003087;color:#009cde;font-size:1.4rem;font-weight:800">P</div>
+          <div class="pwb-title">PayPal</div>
+          <div class="pwb-sub">Log in to PayPal to complete your payment securely.</div>
+          <div class="pwb-amount" id="paypalAmount">$35</div>
+          <button class="pwb-btn pwb-paypal" onclick="processWallet('PayPal')">
+            <span style="color:#009cde;font-weight:800">Pay</span><span style="color:#003087;font-weight:800">Pal</span>
+          </button>
+          <div class="field-group" style="margin-top:1.5rem">
+            <label>PayPal Email (optional)</label>
+            <input type="email" id="paypalEmail" placeholder="your@paypal.com">
+          </div>
+        </div>
+      </div>
+
+      <!-- PAY ON ARRIVAL PANEL -->
+      <div class="pay-panel" id="pay-arrival">
+        <div class="pay-wallet-box">
+          <div class="pwb-icon" style="background:rgba(212,168,67,0.15);color:#d4a843;font-size:1.6rem">&#128181;</div>
+          <div class="pwb-title">Pay On Arrival</div>
+          <div class="pwb-sub">Your reservation is confirmed now. Payment is collected by your valet attendant at drop-off.</div>
+          <div class="pwb-amount" id="arrivalAmount">$35</div>
+          <div class="pwb-arrival-note">
+            <div class="pwan-item">&#10003; &nbsp; Cash, card or contactless accepted at stand</div>
+            <div class="pwan-item">&#10003; &nbsp; Booking guaranteed — no charge now</div>
+            <div class="pwan-item">&#10007; &nbsp; 15% late cancellation fee if no-show</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pay summary strip -->
+      <div class="pay-summary-strip">
+        <div class="pss-left">
+          <div class="pss-label">Due Today</div>
+          <div class="pss-total" id="payStripTotal">$35</div>
+        </div>
+        <div class="pss-right">
+          <div id="payMethodLabel" class="pss-method">Credit / Debit Card</div>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn-back" onclick="goToStep(4)">&larr; Back</button>
+        <button class="btn-next btn-submit" id="payNowBtn" onclick="processPayment()">Pay Now &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Confirmation -->
+    <div class="form-panel" id="panel-6">
       <div class="confirmation-box">
         <div class="confirm-icon">✓</div>
         <div style="font-family:'Syne',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.24em; text-transform:uppercase; color:#d4a843; margin-bottom:0.5rem;">Booking Confirmed</div>
@@ -1407,12 +1727,13 @@
     <div class="footer-tagline">Park with absolute confidence.</div>
   </div>
   <nav class="footer-nav">
-    <a href="#">Book a Valet</a>
+    <a href="#book">Book a Valet</a>
     <a href="kpv-portal.html">My Account</a>
     <a href="kpv-track.html">Track My Vehicle</a>
-    <a href="#">Venue Partners</a>
-    <a href="#">For Businesses</a>
-    <a href="#">Privacy Policy</a>
+    <a href="#book">Venue Partners</a>
+    <a href="keys-please-valet.html#book">Book a Valet</a>
+    <a href="kpv-portal.html">Customer Portal</a>
+    <a href="kpv-admin.html">Staff Login</a>
   </nav>
   <div class="footer-copy">
     © 2025 Keys Please Valet<br>
@@ -1427,7 +1748,7 @@
 </div>
 
 <script>
-  // ── State ──
+  // -- State --
   const state = {
     currentStep: 1,
     venue: 'The Grand Ballroom',
@@ -1440,7 +1761,7 @@
     document.getElementById('book').scrollIntoView({ behavior: 'smooth' });
   }
 
-  // ── Venue selection ──
+  // -- Venue selection --
   function selectVenue(el, name, price) {
     document.querySelectorAll('.venue-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
@@ -1449,7 +1770,7 @@
     updateSummary();
   }
 
-  // ── Tier selection ──
+  // -- Tier selection --
   function selectTier(el, name, surcharge) {
     document.querySelectorAll('.tier-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
@@ -1465,7 +1786,7 @@
     document.getElementById('summaryTotal').textContent = '$' + total;
   }
 
-  // ── Step navigation ──
+  // -- Step navigation --
   function goToStep(n) {
     // Hide current
     document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
@@ -1479,14 +1800,14 @@
       else if (s < n) btn.classList.add('done');
     });
 
-    // Progress bar (only steps 1-4 shown in nav)
-    const pct = Math.min(((n - 1) / 3) * 100, 100);
+    // Progress bar (steps 1-5)
+    const pct = Math.min(((n - 1) / 4) * 100, 100);
     document.getElementById('stepProgress').style.width = pct + '%';
 
     state.currentStep = n;
   }
 
-  // ── Generate token ──
+  // -- Generate token --
   function generateToken() {
     const letters = 'ABCDEFGHJKLMNPQRSTVWXYZ';
     const nums = Math.floor(1000 + Math.random() * 9000);
@@ -1496,7 +1817,7 @@
     return 'KPV-' + code + nums;
   }
 
-  // ── DB helpers (localStorage as persistent store) ──
+  // -- DB helpers (localStorage as persistent store) --
   const DB_KEY = 'kpv_bookings';
 
   function dbLoad() {
@@ -1515,25 +1836,25 @@
     return records.length;
   }
 
-  // ── Submit ──
+  // -- Submit --
   function submitBooking() {
     const firstName = document.getElementById('firstName').value || 'Guest';
     const lastName  = document.getElementById('lastName').value  || '';
-    const email     = document.getElementById('email').value     || '—';
-    const phone     = document.getElementById('phone').value     || '—';
-    const make      = document.getElementById('vehicleMake').value  || '—';
+    const email     = document.getElementById('email').value     || ' ';
+    const phone     = document.getElementById('phone').value     || ' ';
+    const make      = document.getElementById('vehicleMake').value  || ' ';
     const model     = document.getElementById('vehicleModel').value || '';
     const year      = document.getElementById('vehicleYear').value  || '';
     const color     = document.getElementById('vehicleColor').value || '';
-    const plate     = (document.getElementById('licensePlate').value || '—').toUpperCase();
-    const vType     = document.getElementById('vehicleType').value  || '—';
+    const plate     = (document.getElementById('licensePlate').value || ' ').toUpperCase();
+    const vType     = document.getElementById('vehicleType').value  || ' ';
     const vNotes    = document.getElementById('vehicleNotes').value || '';
     const date      = document.getElementById('arrivalDate').value    || 'TBD';
-    const arrival   = document.getElementById('arrivalTime').value    || '—';
-    const departure = document.getElementById('departureTime').value  || '—';
-    const eventType = document.getElementById('eventType').value      || '—';
+    const arrival   = document.getElementById('arrivalTime').value    || ' ';
+    const departure = document.getElementById('departureTime').value  || ' ';
+    const eventType = document.getElementById('eventType').value      || ' ';
     const special   = document.getElementById('specialInstructions').value || '';
-    const payment   = document.getElementById('paymentMethod').value  || '—';
+    const payment   = document.getElementById('paymentMethod').value  || ' ';
     const total     = state.venuePrice + state.tierSurcharge;
     const token     = generateToken();
 
@@ -1564,17 +1885,17 @@
     document.getElementById('confirmToken').textContent   = token;
     document.getElementById('confirmGuest').textContent   = firstName + ' ' + lastName;
     document.getElementById('confirmVenue').textContent   = state.venue;
-    document.getElementById('confirmVehicle').textContent = [year, color, make, model].filter(Boolean).join(' ') || '—';
+    document.getElementById('confirmVehicle').textContent = [year, color, make, model].filter(Boolean).join(' ') || ' ';
     document.getElementById('confirmPlate').textContent   = plate;
-    document.getElementById('confirmDate').textContent    = date + (arrival ? ' · ' + arrival : '');
+    document.getElementById('confirmDate').textContent    = date + (arrival ? '  .  ' + arrival : '');
     document.getElementById('confirmTier').textContent    = state.tier + ' Valet';
     document.getElementById('confirmTotal').textContent   = '$' + total;
 
     goToStep(5);
-    showToast('Booking Saved!', 'Confirmed & stored — token ' + token);
+    showToast('Booking Saved!', 'Confirmed & stored   token ' + token);
   }
 
-  // ── Reset ──
+  // -- Reset --
   function resetForm() {
     document.querySelectorAll('input, select, textarea').forEach(el => { el.value = ''; });
     state.venue = 'The Grand Ballroom';
@@ -1592,7 +1913,7 @@
     scrollToBook();
   }
 
-  // ── Toast ──
+  // -- Toast --
   function showToast(title, msg) {
     const toast = document.getElementById('toast');
     document.getElementById('toastTitle').textContent = title;
@@ -1601,7 +1922,7 @@
     setTimeout(() => toast.classList.remove('show'), 4000);
   }
 
-  // ── Set default date ──
+  // -- Set default date --
   (function() {
     const d = new Date();
     d.setDate(d.getDate() + 7);
@@ -1610,6 +1931,97 @@
     document.getElementById('arrivalDate').min = new Date().toISOString().split('T')[0];
     updateSummary();
   })();
+
+  // ---- PAYMENT STEP ----
+  var activePayMethod = 'card';
+
+  function selectPayTab(el, method) {
+    activePayMethod = method;
+    document.querySelectorAll('.pay-tab').forEach(function(t) { t.classList.remove('active'); });
+    el.classList.add('active');
+    document.querySelectorAll('.pay-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('pay-' + method).classList.add('active');
+    var labels = { card:'Credit / Debit Card', apple:'Apple Pay', google:'Google Pay', paypal:'PayPal', arrival:'Pay On Arrival' };
+    document.getElementById('payMethodLabel').textContent = labels[method] || method;
+    var btn = document.getElementById('payNowBtn');
+    if (method === 'arrival') { btn.textContent = 'Confirm Reservation'; }
+    else { btn.textContent = 'Pay Now'; }
+  }
+
+  function fmtCard(el) {
+    var v = el.value.replace(/[^0-9]/g, '').substring(0, 16);
+    el.value = v.replace(/(.{4})/g, '$1 ').trim();
+    var disp = v.length > 0
+      ? (v + '0000000000000000').substring(0, 16).replace(/(.{4})/g, '$1 ').trim()
+      : 'XXXX XXXX XXXX XXXX';
+    document.getElementById('pcpNum').textContent = disp;
+  }
+
+  function fmtExpiry(el) {
+    var v = el.value.replace(/[^0-9]/g, '').substring(0, 4);
+    el.value = v.length >= 3 ? v.substring(0, 2) + ' / ' + v.substring(2) : v;
+    document.getElementById('pcpExp').textContent = el.value || 'MM / YY';
+  }
+
+  function updatePayAmounts() {
+    var total = '$' + (state.venuePrice + state.tierSurcharge);
+    ['appleAmount','googleAmount','paypalAmount','arrivalAmount','payStripTotal'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = total;
+    });
+  }
+
+  function processWallet(methodName) {
+    var src = event ? event.target : null;
+    var btn = src ? src.closest('.pwb-btn') : null;
+    if (btn) {
+      var orig = btn.innerHTML;
+      btn.innerHTML = 'Processing...';
+      btn.disabled = true;
+      setTimeout(function() {
+        btn.innerHTML = orig;
+        btn.disabled = false;
+        submitBooking();
+      }, 1800);
+    }
+  }
+
+  function processPayment() {
+    if (activePayMethod === 'card') {
+      var num  = (document.getElementById('cardNumber').value || '').replace(/[^0-9]/g, '');
+      var name = (document.getElementById('cardName').value || '').trim();
+      var exp  = (document.getElementById('cardExpiry').value || '').trim();
+      var cvv  = (document.getElementById('cardCvv').value || '').trim();
+      var ok   = true;
+
+      ['cardNumErr','cardNameErr','cardExpErr','cardCvvErr'].forEach(function(id) {
+        document.getElementById(id).style.display = 'none';
+      });
+
+      if (num.length !== 16) { document.getElementById('cardNumErr').style.display = 'block'; ok = false; }
+      if (!name) { document.getElementById('cardNameErr').style.display = 'block'; ok = false; }
+      if (!/^[0-9]{2}.*[0-9]{2}$/.test(exp.replace(' ',''))) { document.getElementById('cardExpErr').style.display = 'block'; ok = false; }
+      if (cvv.length < 3) { document.getElementById('cardCvvErr').style.display = 'block'; ok = false; }
+      if (!ok) return;
+
+      var btn = document.getElementById('payNowBtn');
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+      setTimeout(function() {
+        btn.textContent = 'Pay Now';
+        btn.disabled = false;
+        submitBooking();
+      }, 2000);
+
+    } else if (activePayMethod === 'arrival') {
+      submitBooking();
+    } else {
+      showToast('Use Button Above', 'Tap the ' + activePayMethod + ' button to complete payment.');
+    }
+  }
+
+  updatePayAmounts();
+
 </script>
 </body>
 </html>

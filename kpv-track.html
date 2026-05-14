@@ -59,7 +59,7 @@
     text-decoration: none; color: var(--off-white);
     letter-spacing: 0.02em;
   }
-  .nav-logo em { font-style: italic; color: #e8321f; }
+  .nav-logo em { font-style: italic; color: var(--gold-hi); }
 
   .nav-center {
     display: flex; align-items: center; gap: 0.75rem;
@@ -434,14 +434,15 @@
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="index.html">Keys <em>Please</em> Valet</a>
+  <a class="nav-logo" href="keys-please-valet.html">Keys <em>Please</em> Valet</a>
   <div class="nav-center">
     <span>Live GPS Tracker</span>
     <div class="live-pill"><div class="live-dot"></div>Live</div>
   </div>
   <div class="nav-right">
     <a class="nav-link" href="kpv-portal.html">My Account</a>
-    <a class="nav-link" href="index.html">Book</a>
+    <a class="nav-link" href="keys-please-valet.html">Book</a>
+    <a class="nav-link" href="kpv-admin.html" style="color:rgba(201,153,30,0.5);font-size:0.58rem">Staff</a>
   </div>
 </nav>
 
@@ -483,6 +484,10 @@
     </div>
 
     <!-- GPS stats -->
+    <div style="margin:0.75rem 1.25rem 0;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-family:'DM Mono',monospace;font-size:0.62rem;color:#7a7060" id="gpsBadge">Waiting for GPS...</span>
+      <span style="font-family:'Syne',sans-serif;font-size:0.55rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#6a4e10" id="modeLabel">Customer View</span>
+    </div>
     <div class="gps-stats" id="gpsStats" style="display:none;">
       <div class="gps-stat spd">
         <div class="gps-stat-val" id="gpsSpeed">0</div>
@@ -512,6 +517,10 @@
       <p style="font-family:'Crimson Pro',serif;font-size:0.82rem;color:var(--muted);margin-top:0.6rem;line-height:1.6;text-align:center;">
         Ready to leave? We'll have your car at the entrance in ~4 minutes.
       </p>
+      <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.06)">
+        <button onclick="enableStaffMode()" style="width:100%;background:rgba(201,153,30,0.08);border:1px solid rgba(201,153,30,0.25);color:#c9991e;padding:0.55rem;font-family:'Syne',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(201,153,30,0.15)'" onmouseout="this.style.background='rgba(201,153,30,0.08)'">Staff: Broadcast My Location</button>
+        <p style="font-family:'DM Mono',monospace;font-size:0.58rem;color:#3a3428;margin-top:0.4rem;line-height:1.5;text-align:center">For valet attendants only. Uses device GPS.</p>
+      </div>
     </div>
 
   </div>
@@ -548,396 +557,542 @@
 </div>
 
 <script>
-// ── Config ───────────────────────────────────────────────────────────────────
-const BOOKINGS_KEY = 'kpv_bookings';
-const UPDATE_MS    = 2000; // GPS update interval
+var BOOKINGS_KEY  = 'kpv_bookings';
+var GPS_PREFIX    = 'kpv_gps_';       // key: kpv_gps_<TOKEN>
+var GPS_TTL_MS    = 30000;            // position stale after 30s
+var POLL_MS       = 2500;             // customer polls every 2.5s
+var STAFF_BROADCAST_MS = 3000;        // staff broadcasts every 3s
 
-// ── Map init ─────────────────────────────────────────────────────────────────
-const map = L.map('map', {
-  zoomControl: true,
-  attributionControl: false,
-  zoomAnimation: true,
-});
+// -- Map init ------------------------------------------------------------------
+var map = L.map('map', { zoomControl: true, attributionControl: false, zoomAnimation: true });
+var darkTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+var satTile  = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+var useSat = false;
 
-// Default tile layer (dark)
-const darkTile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '© OpenStreetMap'
-}).addTo(map);
-
-const satTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 19, attribution: '© Esri'
-});
-
-let useSat = false;
 function toggleSatellite() {
   useSat = !useSat;
-  if (useSat) { map.removeLayer(darkTile); satTile.addTo(map); document.getElementById('layerBtn').textContent = '🌍'; }
-  else        { map.removeLayer(satTile); darkTile.addTo(map); document.getElementById('layerBtn').textContent = '🗺️'; }
+  if (useSat) { map.removeLayer(darkTile); satTile.addTo(map); document.getElementById('layerBtn').textContent = 'Map'; }
+  else        { map.removeLayer(satTile); darkTile.addTo(map); document.getElementById('layerBtn').textContent = 'Sat'; }
 }
+map.setView([38.2527, -85.7585], 13);
 
-// Default view – NYC area
-map.setView([40.7580, -73.9855], 14);
+// -- State --------------------------------------------------------------------
+var carMarker      = null;
+var venueMarker    = null;
+var accuracyCircle = null;
+var crumbPolyline  = null;
+var crumbs         = [];
+var pollInterval   = null;
+var staffWatchId   = null;
+var broadcastInterval = null;
+var showRoute      = true;
+var activeBooking  = null;
+var activeToken    = null;
+var appMode        = 'customer'; // 'customer' | 'staff'
+var lastPhase      = 'parked';
+var retrievalRequested = false;
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let carMarker      = null;
-let venueMarker    = null;
-let accuracyCircle = null;
-let routePolyline  = null;
-let crumbPolyline  = null;
-let trackInterval  = null;
-let showRoute      = true;
-let activeBooking  = null;
-let simState       = null; // simulation state
-
-// ── Simulation engine ────────────────────────────────────────────────────────
-// Creates a realistic valet journey: park lot → street → venue entrance
-function createSimulation(venueCoords) {
-  const [vLat, vLng] = venueCoords;
-
-  // Build a route: parking lot (offset) → a couple waypoints → venue
-  const lotLat  = vLat  + (Math.random() * 0.008 + 0.004) * (Math.random() < 0.5 ? 1 : -1);
-  const lotLng  = vLng  + (Math.random() * 0.010 + 0.005) * (Math.random() < 0.5 ? 1 : -1);
-
-  // Intermediate waypoints to simulate driving
-  const wp1Lat = lotLat  + (vLat  - lotLat)  * 0.35 + (Math.random()-0.5)*0.001;
-  const wp1Lng = lotLng  + (vLng  - lotLng)  * 0.35 + (Math.random()-0.5)*0.001;
-  const wp2Lat = lotLat  + (vLat  - lotLat)  * 0.65 + (Math.random()-0.5)*0.001;
-  const wp2Lng = lotLng  + (vLng  - lotLng)  * 0.65 + (Math.random()-0.5)*0.001;
-
-  const waypoints = [
-    [lotLat,  lotLng ],   // 0 - parking lot
-    [wp1Lat,  wp1Lng ],   // 1 - turning onto street
-    [wp2Lat,  wp2Lng ],   // 2 - approaching
-    [vLat,    vLng   ],   // 3 - venue entrance
-  ];
-
-  return {
-    waypoints,
-    venueCoords,
-    phase: 'parked',  // parked | moving | arriving | retrieved
-    segment: 0,       // which waypoint pair we're on
-    progress: 0,      // 0-1 within segment
-    speed: 0,
-    heading: 'N',
-    crumbs: [[lotLat, lotLng]],
-    retrievalRequested: false,
-    ticksParked: 0,
+// -- GPS Storage helpers (shared between customer + staff) ---------------------
+function gpsWrite(token, lat, lng, acc, speed, heading, phase) {
+  var rec = {
+    lat: lat, lng: lng, acc: acc,
+    speed: speed || 0,
+    heading: heading || 'N',
+    phase: phase || 'parked',
+    ts: Date.now()
   };
+  try { localStorage.setItem(GPS_PREFIX + token, JSON.stringify(rec)); } catch(e) {}
 }
 
-function latlngInterp(a, b, t) {
-  return [a[0] + (b[0]-a[0])*t, a[1] + (b[1]-a[1])*t];
+function gpsRead(token) {
+  try {
+    var raw = localStorage.getItem(GPS_PREFIX + token);
+    if (!raw) return null;
+    var rec = JSON.parse(raw);
+    if (Date.now() - rec.ts > GPS_TTL_MS) return null; // stale
+    return rec;
+  } catch(e) { return null; }
 }
 
-function bearing(a, b) {
-  const dLng = (b[1]-a[1]) * Math.PI/180;
-  const lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
-  const y = Math.sin(dLng)*Math.cos(lat2);
-  const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
-  const deg = ((Math.atan2(y,x)*180/Math.PI)+360)%360;
-  const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+function gpsClear(token) {
+  try { localStorage.removeItem(GPS_PREFIX + token); } catch(e) {}
+}
+
+// -- Bearing helper ------------------------------------------------------------
+function calcBearing(a, b) {
+  var dLng = (b[1]-a[1]) * Math.PI/180;
+  var lat1 = a[0]*Math.PI/180, lat2 = b[0]*Math.PI/180;
+  var y = Math.sin(dLng)*Math.cos(lat2);
+  var x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
+  var deg = ((Math.atan2(y,x)*180/Math.PI)+360)%360;
+  var dirs = ['N','NE','E','SE','S','SW','W','NW'];
   return dirs[Math.round(deg/45)%8];
 }
 
-function tickSim() {
-  if (!simState) return;
-  const s = simState;
-  const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-
-  if (s.phase === 'parked') {
-    s.ticksParked++;
-    // After 3 ticks if retrieval requested, start moving
-    if (s.retrievalRequested && s.ticksParked >= 3) {
-      s.phase = 'moving';
-      s.segment = 0;
-      s.progress = 0;
-      updateVehicleStatusBadge('moving');
-      showToast('Vehicle En Route', 'Your car has left the parking area.');
-      updateTimeline('moving');
-    }
-    // Update coords with tiny jitter (parking lot sway)
-    const cur = s.waypoints[0];
-    const jitterLat = cur[0] + (Math.random()-0.5)*0.00003;
-    const jitterLng = cur[1] + (Math.random()-0.5)*0.00003;
-    updateCarPosition([jitterLat, jitterLng], 0, '—', '~4 min', now, 2 + Math.random()*3);
-  }
-
-  else if (s.phase === 'moving') {
-    const from = s.waypoints[s.segment];
-    const to   = s.waypoints[s.segment+1];
-    s.progress += 0.045 + Math.random()*0.03;
-
-    if (s.progress >= 1) {
-      s.progress = 0;
-      s.segment++;
-      if (s.segment >= s.waypoints.length-1) {
-        s.phase = 'arriving';
-        updateVehicleStatusBadge('arriving');
-        updateTimeline('arriving');
-        showToast('Almost There!', 'Your vehicle is arriving at the entrance.');
-      }
-    }
-
-    const t = Math.min(s.progress, 1);
-    const pos = latlngInterp(from, to, t);
-    s.crumbs.push(pos);
-    const spd = Math.round(8 + Math.random()*12);
-    const hdg = bearing(from, to);
-    const segsLeft = (s.waypoints.length-1) - s.segment - t;
-    const etaMins  = Math.max(1, Math.round(segsLeft * 1.5));
-    s.speed = spd; s.heading = hdg;
-    updateCarPosition(pos, spd, hdg, etaMins + ' min', now, 3 + Math.random()*5);
-    updateCrumbs(s.crumbs);
-  }
-
-  else if (s.phase === 'arriving') {
-    const pos = s.waypoints[s.waypoints.length-1];
-    const jitterLat = pos[0] + (Math.random()-0.5)*0.00002;
-    const jitterLng = pos[1] + (Math.random()-0.5)*0.00002;
-    updateCarPosition([jitterLat, jitterLng], 0, '—', 'Now', now, 1 + Math.random()*2);
-    // After arriving, disable retrieve btn
-    document.getElementById('retrieveBtn').disabled = true;
-    document.getElementById('retrieveBtn').textContent = '✓ Vehicle at Entrance';
-    setTimeout(() => {
-      s.phase = 'retrieved';
-      updateVehicleStatusBadge('parked');
-      updateTimeline('retrieved');
-      clearInterval(trackInterval);
-    }, 8000);
-  }
+// -- Haversine distance (metres) ----------------------------------------------
+function haverDist(a, b) {
+  var R = 6371000;
+  var dLat = (b[0]-a[0])*Math.PI/180;
+  var dLng = (b[1]-a[1])*Math.PI/180;
+  var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+          Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*
+          Math.sin(dLng/2)*Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
 }
 
-// ── Marker helpers ────────────────────────────────────────────────────────────
+// -- Map marker helpers --------------------------------------------------------
 function makeCarIcon() {
   return L.divIcon({
     className: '',
-    html: `<div class="car-marker-wrap"><div class="car-pulse"></div><div class="car-pin">🚗</div></div>`,
-    iconSize: [48, 48], iconAnchor: [24, 24],
+    html: '<div class="car-marker-wrap"><div class="car-pulse"></div><div class="car-pin">&#128663;</div></div>',
+    iconSize: [48,48], iconAnchor: [24,24]
   });
 }
-
 function makeVenueIcon() {
   return L.divIcon({
     className: '',
-    html: `<div class="venue-pin">📍</div>`,
-    iconSize: [28, 28], iconAnchor: [14, 14],
+    html: '<div class="venue-pin">&#128205;</div>',
+    iconSize: [28,28], iconAnchor: [14,14]
   });
 }
 
-function updateCarPosition(pos, speed, heading, eta, time, acc) {
+function placeOrMovecar(pos) {
   if (!carMarker) {
     carMarker = L.marker(pos, { icon: makeCarIcon(), zIndexOffset: 1000 }).addTo(map);
   } else {
     carMarker.setLatLng(pos);
   }
+}
+
+function placeOrMoveAccuracy(pos, radius) {
   if (!accuracyCircle) {
-    accuracyCircle = L.circle(pos, { radius: acc*10, weight: 1 }).addTo(map);
+    accuracyCircle = L.circle(pos, { radius: radius, weight: 1, color: 'rgba(201,153,30,0.4)', fillColor: 'rgba(201,153,30,0.06)', fillOpacity: 1 }).addTo(map);
   } else {
-    accuracyCircle.setLatLng(pos).setRadius(acc*10);
+    accuracyCircle.setLatLng(pos).setRadius(radius);
   }
-
-  // Info bar
-  document.getElementById('mibCoords').textContent = pos[0].toFixed(5) + ', ' + pos[1].toFixed(5);
-  document.getElementById('mibAcc').textContent    = '±' + Math.round(acc*10) + 'm';
-  document.getElementById('mibTime').textContent   = time;
-  if (venueMarker) {
-    const dist = map.distance(pos, venueMarker.getLatLng());
-    document.getElementById('mibDist').textContent = dist > 1000 ? (dist/1000).toFixed(2)+'km' : Math.round(dist)+'m';
-  }
-
-  // GPS stats
-  document.getElementById('gpsSpeed').textContent   = speed;
-  document.getElementById('gpsHeading').textContent = heading;
-  document.getElementById('gpsEta').textContent     = eta;
 }
 
-function updateCrumbs(crumbs) {
+function addCrumb(pos) {
+  crumbs.push(pos);
+  if (crumbs.length > 200) crumbs.shift(); // keep last 200 points
   if (crumbPolyline) map.removeLayer(crumbPolyline);
-  if (crumbs.length < 2) return;
-  crumbPolyline = L.polyline(crumbs, {
-    color: 'rgba(201,153,30,0.4)', weight: 2, dashArray: '4,6'
-  }).addTo(map);
+  if (crumbs.length >= 2) {
+    crumbPolyline = L.polyline(crumbs, {
+      color: 'rgba(201,153,30,0.45)', weight: 2, dashArray: '4,6'
+    }).addTo(map);
+  }
 }
 
-function centerOnCar() {
-  if (carMarker) map.setView(carMarker.getLatLng(), 16, { animate: true });
+function updateInfoBar(pos, acc, speed, heading, phase, distToVenue) {
+  document.getElementById('mibCoords').textContent = pos[0].toFixed(5) + ', ' + pos[1].toFixed(5);
+  document.getElementById('mibAcc').textContent    = '+/-' + Math.round(acc) + 'm';
+  document.getElementById('mibTime').textContent   = new Date().toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('gpsSpeed').textContent  = Math.round(speed * 2.237); // m/s to mph
+  document.getElementById('gpsHeading').textContent = heading;
+  if (venueMarker) {
+    var d = haverDist(pos, [venueMarker.getLatLng().lat, venueMarker.getLatLng().lng]);
+    document.getElementById('mibDist').textContent = d > 1000 ? (d/1000).toFixed(2)+'km' : Math.round(d)+'m';
+    // ETA: rough estimate based on distance and speed
+    var spd = speed > 0.5 ? speed : 4.5; // default walking speed if stopped
+    var etaSec = d / spd;
+    document.getElementById('gpsEta').textContent = etaSec < 60 ? 'Now' : Math.ceil(etaSec/60) + 'min';
+  }
+  // GPS signal quality indicator
+  var sigEl = document.getElementById('gpsSignal');
+  if (sigEl) {
+    if (acc < 10)       { sigEl.textContent = 'GPS Excellent'; sigEl.style.color = '#48bb78'; }
+    else if (acc < 25)  { sigEl.textContent = 'GPS Good'; sigEl.style.color = '#e8bb48'; }
+    else if (acc < 50)  { sigEl.textContent = 'GPS Fair'; sigEl.style.color = '#e8921e'; }
+    else                { sigEl.textContent = 'GPS Weak'; sigEl.style.color = '#e85040'; }
+  }
 }
 
-function toggleRoute() {
-  showRoute = !showRoute;
-  if (routePolyline) routePolyline.setStyle({ opacity: showRoute ? 0.5 : 0 });
-  document.getElementById('routeBtn').textContent = showRoute ? '〰️' : '—';
+function applyPhase(phase) {
+  if (phase === lastPhase) return;
+  lastPhase = phase;
+  updateVehicleStatusBadge(phase);
+  updateTimeline(phase);
+  if (phase === 'moving')   showToast('Vehicle En Route', 'Your car has left the parking area.');
+  if (phase === 'arriving') showToast('Almost There!', 'Your vehicle is arriving at the entrance.');
+  if (phase === 'retrieved') {
+    document.getElementById('retrieveBtn').disabled = true;
+    document.getElementById('retrieveBtn').textContent = 'Vehicle Delivered';
+    showToast('Delivered', 'Your vehicle is at the entrance. Safe travels!');
+  }
 }
 
-// ── Token lookup & tracking start ─────────────────────────────────────────────
-const VENUE_COORDS = {
-  'The Grand Ballroom':   [40.7614, -73.9776],
-  'Harborview Hotel':     [40.7527, -74.0052],
-  'Meridian Country Club':[40.7831, -73.9712],
-  'The Foundry':          [40.7441, -74.0055],
+// =============================================================================
+// CUSTOMER MODE - polls GPS store every 2.5s, reads staff-broadcast position
+// =============================================================================
+function startCustomerTracking(booking) {
+  activeBooking = booking;
+  activeToken   = booking.id;
+  lastPhase     = 'parked';
+  crumbs        = [];
+
+  var venueCoords = VENUE_COORDS[booking.venue] || [38.2527, -85.7585];
+  venueMarker = L.marker(venueCoords, { icon: makeVenueIcon() })
+    .bindPopup('<b style="font-size:12px">' + (booking.venue || 'Venue') + '</b>')
+    .addTo(map);
+
+  updateTimeline('parked');
+  updateVehicleStatusBadge('parked');
+
+  // Show permission banner for staff mode option
+  updateGpsSourceBadge('live');
+
+  // Start polling the shared GPS store (written by staff device)
+  pollInterval = setInterval(function() {
+    var rec = gpsRead(activeToken);
+    if (!rec) {
+      // No live data - show stale indicator
+      updateGpsSourceBadge('stale');
+      return;
+    }
+    updateGpsSourceBadge('live');
+    var pos = [rec.lat, rec.lng];
+    placeOrMovecar(pos);
+    placeOrMoveAccuracy(pos, rec.acc || 15);
+    addCrumb(pos);
+    updateInfoBar(pos, rec.acc || 15, rec.speed || 0, rec.heading || 'N', rec.phase, null);
+    applyPhase(rec.phase || 'parked');
+
+    // Auto-pan to vehicle if close to map edge
+    var mapBounds = map.getBounds();
+    if (!mapBounds.contains(L.latLng(pos[0], pos[1]))) {
+      map.panTo(pos, { animate: true, duration: 0.8 });
+    }
+  }, POLL_MS);
+
+  // Fit map to venue area initially
+  map.setView(venueCoords, 15, { animate: true });
+  showToast('Tracking Active', 'Live GPS connected for ' + booking.id);
+  document.getElementById('mapInfoBar').style.display = 'flex';
+}
+
+// =============================================================================
+// STAFF MODE - uses device geolocation to broadcast real position
+// =============================================================================
+function startStaffBroadcast(token, phase) {
+  if (!navigator.geolocation) {
+    showToast('Not Supported', 'Geolocation is not available on this device.');
+    return;
+  }
+  var currentPhase = phase || 'parked';
+  var lastPos = null;
+
+  function broadcastOnce(pos) {
+    var coords = pos.coords;
+    var lat = coords.latitude;
+    var lng = coords.longitude;
+    var acc = coords.accuracy;
+    var spd = coords.speed || 0;
+
+    // Calculate heading from movement if available
+    var hdg = 'N';
+    if (lastPos) {
+      hdg = calcBearing([lastPos.lat, lastPos.lng], [lat, lng]);
+    }
+    lastPos = { lat: lat, lng: lng };
+
+    gpsWrite(token, lat, lng, acc, spd, hdg, currentPhase);
+
+    // Update own map view
+    placeOrMovecar([lat, lng]);
+    placeOrMoveAccuracy([lat, lng], acc);
+    addCrumb([lat, lng]);
+    updateInfoBar([lat, lng], acc, spd, hdg, currentPhase, null);
+    updateGpsSourceBadge('broadcasting');
+  }
+
+  function handleError(err) {
+    var msgs = { 1:'Location permission denied.', 2:'Position unavailable.', 3:'Location request timed out.' };
+    showToast('GPS Error', msgs[err.code] || 'Location error.');
+    updateGpsSourceBadge('error');
+  }
+
+  var geoOpts = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+
+  // Get initial position immediately
+  navigator.geolocation.getCurrentPosition(broadcastOnce, handleError, geoOpts);
+
+  // Then watch continuously
+  staffWatchId = navigator.geolocation.watchPosition(broadcastOnce, handleError, geoOpts);
+
+  // Update phase on interval (in case phase changes)
+  broadcastInterval = setInterval(function() {
+    if (retrievalRequested && currentPhase === 'parked') {
+      currentPhase = 'moving';
+      updateTimeline('moving');
+      updateVehicleStatusBadge('moving');
+    }
+  }, 3000);
+
+  showToast('Broadcasting GPS', 'Your location is being shared for token ' + token);
+}
+
+function stopStaffBroadcast() {
+  if (staffWatchId !== null) {
+    navigator.geolocation.clearWatch(staffWatchId);
+    staffWatchId = null;
+  }
+  if (broadcastInterval) {
+    clearInterval(broadcastInterval);
+    broadcastInterval = null;
+  }
+  if (activeToken) gpsClear(activeToken);
+  updateGpsSourceBadge('off');
+}
+
+// -- GPS source badge ----------------------------------------------------------
+function updateGpsSourceBadge(state) {
+  var el = document.getElementById('gpsBadge');
+  if (!el) return;
+  var states = {
+    live:         { text: 'Live GPS', color: '#48bb78' },
+    broadcasting: { text: 'Broadcasting', color: '#e8bb48' },
+    stale:        { text: 'Waiting for signal...', color: '#e8921e' },
+    error:        { text: 'GPS Error', color: '#e85040' },
+    off:          { text: 'GPS Off', color: '#7a7060' }
+  };
+  var s = states[state] || states.off;
+  el.textContent  = s.text;
+  el.style.color  = s.color;
+}
+
+// -- Token validation and load ------------------------------------------------
+var VENUE_COORDS = {
+  'The Grand Ballroom':    [38.2566, -85.7485],
+  'Harborview Hotel':      [38.2631, -85.7402],
+  'Meridian Country Club': [38.2902, -85.6580],
+  'The Foundry':           [38.2454, -85.7601]
 };
 
+var TOKEN_REGEX = /^KPV-[A-Z]{3}[0-9]{4}$/;
+function isValidToken(t) { return TOKEN_REGEX.test((t||'').trim().toUpperCase()); }
+
 function loadToken() {
-  const raw = document.getElementById('tokenInput').value.trim().toUpperCase();
+  var raw = document.getElementById('tokenInput').value.trim().toUpperCase();
   if (!raw) { showToast('Error', 'Please enter a valet token.'); return; }
 
-  // Look up booking
-  let booking = null;
-  try { booking = JSON.parse(localStorage.getItem(BOOKINGS_KEY)||'[]').find(b => b.id === raw); } catch(e){}
-
-  if (!booking) {
-    // Demo mode – generate a mock booking
-    booking = {
-      id: raw,
-      guest: { firstName: 'Demo', lastName: 'Guest' },
-      venue: 'The Grand Ballroom',
-      tier: 'Standard Valet',
-      total: 35,
-      status: 'confirmed',
-      schedule: { date: new Date().toLocaleDateString(), arrival: '7:30 PM' },
-      vehicle: { make: 'Mercedes', model: 'E-Class', year: '2023', color: 'Obsidian Black', plate: 'KPV-DEMO' }
-    };
-    showToast('Demo Mode', 'Showing simulated tracking for ' + raw);
+  if (!isValidToken(raw)) {
+    showToast('Invalid Token', 'Format must be KPV-ABC1234.');
+    document.getElementById('tokenInput').style.borderColor = 'rgba(200,40,26,0.7)';
+    setTimeout(function(){ document.getElementById('tokenInput').style.borderColor = ''; }, 2500);
+    return;
   }
 
+  var booking = null;
+  try {
+    var all = JSON.parse(localStorage.getItem(BOOKINGS_KEY) || '[]');
+    booking = null;
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].id === raw) { booking = all[i]; break; }
+    }
+  } catch(e) {}
+
+  if (!booking) {
+    showToast('Not Found', 'No reservation found for ' + raw + '.');
+    document.getElementById('tokenInput').style.borderColor = 'rgba(200,40,26,0.7)';
+    setTimeout(function(){ document.getElementById('tokenInput').style.borderColor = ''; }, 2500);
+    return;
+  }
   if (booking.status === 'cancelled') {
     showToast('Cancelled', 'This booking has been cancelled.'); return;
   }
 
-  activeBooking = booking;
-  startTracking(booking);
+  // Clear old tracking
+  if (pollInterval)    { clearInterval(pollInterval); pollInterval = null; }
+  if (staffWatchId !== null) { stopStaffBroadcast(); }
+  if (carMarker)       { map.removeLayer(carMarker); carMarker = null; }
+  if (venueMarker)     { map.removeLayer(venueMarker); venueMarker = null; }
+  if (accuracyCircle)  { map.removeLayer(accuracyCircle); accuracyCircle = null; }
+  if (crumbPolyline)   { map.removeLayer(crumbPolyline); crumbPolyline = null; }
+  crumbs = [];
+
+  activeToken = raw;
+  document.getElementById('tokenInput').style.borderColor = 'rgba(72,187,120,0.6)';
+  setTimeout(function(){ document.getElementById('tokenInput').style.borderColor = ''; }, 2000);
+
+  populateSidebar(booking);
+
+  // Determine mode from URL param or default to customer
+  var params = new URLSearchParams(window.location.search);
+  appMode = params.get('mode') === 'staff' ? 'staff' : 'customer';
+
+  if (appMode === 'staff') {
+    requestDeviceGPS(booking);
+  } else {
+    startCustomerTracking(booking);
+  }
 }
 
-function startTracking(booking) {
-  // Stop any existing simulation
-  if (trackInterval) clearInterval(trackInterval);
-  if (carMarker)     { map.removeLayer(carMarker); carMarker = null; }
-  if (venueMarker)   { map.removeLayer(venueMarker); venueMarker = null; }
-  if (accuracyCircle){ map.removeLayer(accuracyCircle); accuracyCircle = null; }
-  if (crumbPolyline) { map.removeLayer(crumbPolyline); crumbPolyline = null; }
-  if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+function populateSidebar(booking) {
+  var vehicle = '';
+  if (booking.vehicle) {
+    vehicle = [booking.vehicle.year, booking.vehicle.color, booking.vehicle.make, booking.vehicle.model].filter(Boolean).join(' ');
+  }
+  vehicle = vehicle || 'Unknown Vehicle';
 
-  // Populate sidebar
-  const vehicle = [booking.vehicle?.year, booking.vehicle?.color, booking.vehicle?.make, booking.vehicle?.model].filter(Boolean).join(' ') || '—';
   document.getElementById('vcToken').textContent   = booking.id;
   document.getElementById('vcVehicle').textContent = vehicle;
-  document.getElementById('vcPlate').textContent   = '🔖 ' + (booking.vehicle?.plate || '—');
-  document.getElementById('vcVenue').textContent   = booking.venue || '—';
-  document.getElementById('vcGuest').textContent   = [booking.guest?.firstName, booking.guest?.lastName].filter(Boolean).join(' ') || '—';
-  document.getElementById('vcDate').textContent    = booking.schedule?.date || '—';
-  document.getElementById('vcTier').textContent    = booking.tier || '—';
+  document.getElementById('vcPlate').textContent   = (booking.vehicle && booking.vehicle.plate) ? booking.vehicle.plate : 'N/A';
+  document.getElementById('vcVenue').textContent   = booking.venue || 'N/A';
+  document.getElementById('vcGuest').textContent   = [(booking.guest && booking.guest.firstName), (booking.guest && booking.guest.lastName)].filter(Boolean).join(' ') || 'N/A';
+  document.getElementById('vcDate').textContent    = (booking.schedule && booking.schedule.date) || 'N/A';
+  document.getElementById('vcTier').textContent    = booking.tier || 'N/A';
 
-  document.getElementById('noBooking').style.display  = 'none';
+  document.getElementById('noBooking').style.display   = 'none';
   document.getElementById('vehicleCard').classList.add('visible');
-  document.getElementById('gpsStats').style.display   = 'grid';
-  document.getElementById('timeline').style.display   = 'block';
-  document.getElementById('retrieveCta').style.display= 'block';
-  document.getElementById('mapInfoBar').style.display = 'flex';
-  document.getElementById('retrieveBtn').disabled     = false;
-  document.getElementById('retrieveBtn').textContent  = '🚗   Request Vehicle Retrieval';
-
-  // Venue on map
-  const venueCoords = VENUE_COORDS[booking.venue] || [40.7580, -73.9855];
-  venueMarker = L.marker(venueCoords, { icon: makeVenueIcon() })
-    .bindPopup(`<b style="font-family:sans-serif;font-size:12px;color:#333">${booking.venue || 'Venue'}</b>`)
-    .addTo(map);
-
-  // Build simulation
-  simState = createSimulation(venueCoords);
-
-  // Draw intended route
-  routePolyline = L.polyline(simState.waypoints, {
-    color: 'rgba(201,153,30,0.5)', weight: 3, dashArray: '8,10'
-  }).addTo(map);
-
-  // Place car at parking lot immediately
-  const lotPos = simState.waypoints[0];
-  carMarker = L.marker(lotPos, { icon: makeCarIcon(), zIndexOffset: 1000 }).addTo(map);
-  accuracyCircle = L.circle(lotPos, { radius: 20, weight: 1 }).addTo(map);
-
-  // Fit map to route
-  map.fitBounds(L.latLngBounds(simState.waypoints).pad(0.2), { animate: true });
-
-  // Timeline
-  updateTimeline('parked');
-
-  // Start ticking
-  trackInterval = setInterval(tickSim, UPDATE_MS);
-  showToast('Tracking Active', 'Live GPS enabled for ' + booking.id);
+  document.getElementById('gpsStats').style.display    = 'grid';
+  document.getElementById('timeline').style.display    = 'block';
+  document.getElementById('retrieveCta').style.display = 'block';
+  document.getElementById('retrieveBtn').disabled      = false;
+  document.getElementById('retrieveBtn').textContent   = 'Request Vehicle Retrieval';
 }
 
-// ── Timeline ─────────────────────────────────────────────────────────────────
-const TL_EVENTS = [
-  { key: 'checked_in', label: 'Vehicle Checked In',    icon: '✓' },
-  { key: 'parked',     label: 'Securely Parked',       icon: '🅿️' },
-  { key: 'moving',     label: 'Retrieval in Progress', icon: '🚗' },
-  { key: 'arriving',   label: 'Arriving at Entrance',  icon: '📍' },
-  { key: 'retrieved',  label: 'Vehicle Delivered',     icon: '🏁' },
+// -- Request device GPS (staff mode) ------------------------------------------
+function requestDeviceGPS(booking) {
+  if (!navigator.geolocation) {
+    showToast('GPS Not Available', 'This device does not support geolocation.');
+    // Fall back to customer mode
+    startCustomerTracking(booking);
+    return;
+  }
+
+  showToast('Requesting GPS', 'Allow location access to broadcast vehicle position.');
+  updateGpsSourceBadge('stale');
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // Permission granted - start broadcasting
+      startStaffBroadcast(booking.id, 'parked');
+      var vc = VENUE_COORDS[booking.venue] || [38.2527, -85.7585];
+      venueMarker = L.marker(vc, { icon: makeVenueIcon() })
+        .bindPopup('<b style="font-size:12px">' + (booking.venue || 'Venue') + '</b>')
+        .addTo(map);
+      updateTimeline('parked');
+      updateVehicleStatusBadge('parked');
+      document.getElementById('mapInfoBar').style.display = 'flex';
+    },
+    function(err) {
+      // Permission denied or error - fall back to customer mode
+      showToast('GPS Denied', 'Switching to customer view mode.');
+      startCustomerTracking(booking);
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+// -- Map controls -------------------------------------------------------------
+function centerOnCar() {
+  if (carMarker) map.setView(carMarker.getLatLng(), 17, { animate: true });
+}
+
+function toggleRoute() {
+  showRoute = !showRoute;
+  if (crumbPolyline) crumbPolyline.setStyle({ opacity: showRoute ? 0.45 : 0 });
+  document.getElementById('routeBtn').textContent = showRoute ? 'Hide Trail' : 'Show Trail';
+}
+
+// -- Retrieval request --------------------------------------------------------
+function requestRetrieval() {
+  if (!activeToken) { showToast('No Active Booking', 'Load a token first.'); return; }
+  retrievalRequested = true;
+
+  // Write retrieval request into GPS store phase
+  var rec = gpsRead(activeToken);
+  if (rec) {
+    gpsWrite(activeToken, rec.lat, rec.lng, rec.acc, rec.speed, rec.heading, 'moving');
+  }
+
+  document.getElementById('retrieveBtn').textContent = 'Valet Notified - En Route...';
+  document.getElementById('retrieveBtn').style.background = 'linear-gradient(135deg, #b06010 0%, #784010 100%)';
+  showToast('Request Sent!', 'Your valet has been notified. Vehicle en route in moments.');
+  updateTimeline('moving');
+  updateVehicleStatusBadge('moving');
+}
+
+// -- Timeline & status --------------------------------------------------------
+var TL_EVENTS = [
+  { key: 'checked_in', label: 'Vehicle Checked In' },
+  { key: 'parked',     label: 'Securely Parked' },
+  { key: 'moving',     label: 'Retrieval in Progress' },
+  { key: 'arriving',   label: 'Arriving at Entrance' },
+  { key: 'retrieved',  label: 'Vehicle Delivered' }
 ];
 
 function updateTimeline(phase) {
-  const phases = ['checked_in','parked','moving','arriving','retrieved'];
-  const current = phases.indexOf(phase);
-  const container = document.getElementById('tlItems');
-  container.innerHTML = TL_EVENTS.map((ev, i) => {
-    const isDone   = i < current;
-    const isActive = i === current;
-    const isFuture = i > current;
-    const dotClass = isDone ? 'done' : isActive ? 'active' : 'future';
-    const lineClass = isDone ? 'done-line' : '';
-    const time = isActive ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : isDone ? '✓' : '';
-    return `
-      <div class="tl-item">
-        <div class="tl-dot-wrap">
-          <div class="tl-dot ${dotClass}"></div>
-          ${i < TL_EVENTS.length-1 ? `<div class="tl-line ${lineClass}"></div>` : ''}
-        </div>
-        <div class="tl-text">
-          <div class="tl-event ${isFuture?'future':''}">${ev.icon} ${ev.label}</div>
-          ${time ? `<div class="tl-time">${time}</div>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+  var phases  = ['checked_in','parked','moving','arriving','retrieved'];
+  var current = phases.indexOf(phase);
+  var c       = document.getElementById('tlItems');
+  var h = '';
+  for (var i = 0; i < TL_EVENTS.length; i++) {
+    var ev = TL_EVENTS[i];
+    var isDone   = i < current;
+    var isActive = i === current;
+    var isFuture = i > current;
+    var dotCls   = isDone ? 'done' : isActive ? 'active' : 'future';
+    var lineCls  = isDone ? 'done-line' : '';
+    var timeStr  = isActive ? new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) : isDone ? '&#10003;' : '';
+    h += '<div class="tl-item">';
+    h += '<div class="tl-dot-wrap"><div class="tl-dot ' + dotCls + '"></div>';
+    if (i < TL_EVENTS.length-1) h += '<div class="tl-line ' + lineCls + '"></div>';
+    h += '</div><div class="tl-text"><div class="tl-event' + (isFuture?' future':'') + '">' + ev.label + '</div>';
+    if (timeStr) h += '<div class="tl-time">' + timeStr + '</div>';
+    h += '</div></div>';
+  }
+  c.innerHTML = h;
 }
 
 function updateVehicleStatusBadge(phase) {
-  const el = document.getElementById('vcStatus');
-  if (phase === 'moving') {
-    el.className = 'status-badge sb-moving'; el.innerHTML = '<span>⬤</span> En Route to Entrance';
-  } else if (phase === 'arriving') {
-    el.className = 'status-badge sb-arriving'; el.innerHTML = '<span>⬤</span> Arriving Now';
-  } else {
-    el.className = 'status-badge sb-parked'; el.innerHTML = '<span>⬤</span> Securely Parked';
-  }
+  var el = document.getElementById('vcStatus');
+  if (phase === 'moving')   { el.className = 'status-badge sb-moving';   el.textContent = 'En Route to Entrance'; }
+  else if (phase === 'arriving') { el.className = 'status-badge sb-arriving'; el.textContent = 'Arriving Now'; }
+  else if (phase === 'retrieved') { el.className = 'status-badge sb-parked'; el.textContent = 'Delivered'; }
+  else                      { el.className = 'status-badge sb-parked';   el.textContent = 'Securely Parked'; }
 }
 
-// ── Retrieval request ────────────────────────────────────────────────────────
-function requestRetrieval() {
-  if (!simState) { showToast('No Active Booking', 'Load a token first.'); return; }
-  simState.retrievalRequested = true;
-  document.getElementById('retrieveBtn').textContent = '⏳  Valet Notified — En Route…';
-  document.getElementById('retrieveBtn').style.background = 'linear-gradient(135deg, #b06010 0%, #784010 100%)';
-  showToast('Request Sent!', 'Your valet has been notified. Vehicle en route in moments.');
-}
-
-// ── Toast ────────────────────────────────────────────────────────────────────
+// -- Toast --------------------------------------------------------------------
 function showToast(title, msg) {
   document.getElementById('toastTitle').textContent = title;
   document.getElementById('toastMsg').textContent   = msg;
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 4000);
+  setTimeout(function(){ t.classList.remove('show'); }, 4500);
 }
 
-// ── Auto-load token from URL (?token=KPV-XXX) ────────────────────────────────
+// -- Staff mode toggle (called from sidebar button) ---------------------------
+function enableStaffMode() {
+  if (!activeToken) { showToast('Load Token First', 'Enter a valid valet token to start broadcasting.'); return; }
+  if (!navigator.geolocation) { showToast('GPS Not Supported', 'This device does not support geolocation.'); return; }
+  appMode = 'staff';
+  document.getElementById('modeLabel').textContent = 'Staff Broadcasting';
+  document.getElementById('modeLabel').style.color = '#e8bb48';
+  stopStaffBroadcast();
+  requestDeviceGPS(activeBooking);
+}
+
+// -- Auto-load token from URL -------------------------------------------------
 (function init() {
-  const params = new URLSearchParams(window.location.search);
-  const tok    = params.get('token');
+  var params = new URLSearchParams(window.location.search);
+  var tok    = params.get('token');
   if (tok) {
     document.getElementById('tokenInput').value = tok.toUpperCase();
-    setTimeout(loadToken, 600);
+    setTimeout(loadToken, 500);
   }
 })();
 </script>
+
+<footer style="padding:1.25rem 2rem;border-top:1px solid rgba(201,153,30,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;background:rgba(4,3,10,0.8);flex-shrink:0">
+  <a href="keys-please-valet.html" style="font-family:'Playfair Display',serif;font-size:0.95rem;font-weight:700;color:#f0e8d8;text-decoration:none">Keys <em style="font-style:italic;color:#e8bb48">Please</em> Valet</a>
+  <nav style="display:flex;gap:1.25rem;flex-wrap:wrap">
+    <a href="keys-please-valet.html" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060;text-decoration:none">Book</a>
+    <a href="kpv-portal.html" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060;text-decoration:none">My Account</a>
+    <a href="kpv-track.html" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#c9991e;text-decoration:none">GPS Tracker</a>
+    <a href="kpv-admin.html" style="font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(201,153,30,0.4);text-decoration:none">Staff</a>
+  </nav>
+  <span style="font-family:'DM Mono',monospace;font-size:0.58rem;color:#3a3428">Keys Please Valet &copy; 2025</span>
+</footer>
 </body>
 </html>

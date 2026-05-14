@@ -60,7 +60,7 @@
     font-size: 1.2rem; font-weight: 700; letter-spacing: 0.03em;
     text-decoration: none; color: var(--off-white);
   }
-  .nav-logo em { font-style: italic;  color: #e8321f; }
+  .nav-logo em { font-style: italic; color: var(--gold-hi); }
 
   .nav-right { display: flex; align-items: center; gap: 1.25rem; }
   .nav-link {
@@ -527,18 +527,290 @@
     .auth-wrap { padding: 1rem; }
     .field-row { grid-template-columns: 1fr; }
   }
+
+  /* ── EDIT PROFILE MODAL ── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(4,3,10,0.85);
+    backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-backdrop.open { display: flex; }
+
+  .edit-modal {
+    width: 100%; max-width: 500px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+      linear-gradient(150deg, #1e0f0a 0%, #160b07 50%, #120907 100%);
+    border: 1px solid rgba(160,80,40,0.35);
+    box-shadow: inset 0 1px 0 rgba(220,130,80,0.1), 0 32px 80px rgba(0,0,0,0.7);
+    padding: 2rem;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .edit-modal::-webkit-scrollbar { width: 4px; }
+  .edit-modal::-webkit-scrollbar-thumb { background: var(--dim); }
+
+  .edit-modal::before {
+    content: 'EDIT PROFILE';
+    position: absolute; top: -0.5rem; left: 1.5rem;
+    background: var(--choc); padding: 0 0.5rem;
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.3em; color: var(--gold);
+  }
+
+  .modal-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 500; line-height: 1.1;
+    color: var(--off-white); margin-bottom: 0.3rem; letter-spacing: -0.01em;
+  }
+  .modal-title em { font-style: italic; color: var(--gold-hi); }
+  .modal-sub {
+    font-family: 'Crimson Pro', serif; font-size: 0.95rem;
+    color: var(--parchment); margin-bottom: 1.75rem; line-height: 1.7;
+  }
+
+  .modal-section-label {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--gold);
+    margin: 1.25rem 0 0.75rem;
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .modal-section-label::before {
+    content: ''; display: block; width: 1.2rem; height: 1px;
+    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+  }
+
+  .edit-field { margin-bottom: 1rem; }
+  .edit-field label {
+    display: block; font-family: 'Syne', sans-serif;
+    font-size: 0.58rem; font-weight: 600; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #b8ad9c; margin-bottom: 0.45rem;
+  }
+  .edit-input, .edit-select {
+    width: 100%; background: rgba(10,5,3,0.75);
+    border: 1px solid rgba(180,90,50,0.22);
+    color: #f0e8d8; padding: 0.75rem 1rem;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    outline: none; transition: all 0.2s;
+    -webkit-appearance: none; appearance: none;
+  }
+  .edit-input:focus, .edit-select:focus {
+    border-color: rgba(210,130,70,0.65);
+    background: rgba(30,12,6,0.9);
+    box-shadow: 0 0 0 3px rgba(180,80,30,0.08);
+  }
+  .edit-input:disabled {
+    opacity: 0.45; cursor: not-allowed;
+  }
+  .edit-input::placeholder { color: rgba(255,255,255,0.22); font-style: italic; }
+  .edit-select option { background: #160b07; color: #f0e8d8; }
+
+  .edit-field-hint {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--muted); margin-top: 0.3rem;
+  }
+
+  .edit-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  .edit-field-error {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: #e85040; margin-top: 0.3rem; display: none;
+  }
+  .edit-field-error.show { display: block; }
+
+  .password-toggle {
+    position: relative;
+  }
+  .password-toggle .toggle-btn {
+    position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    font-size: 0.8rem; color: var(--muted); transition: color 0.2s;
+  }
+  .password-toggle .toggle-btn:hover { color: var(--gold); }
+
+  .modal-divider {
+    height: 1px; margin: 1.5rem 0;
+    background: linear-gradient(to right, transparent, rgba(180,90,40,0.3), transparent);
+  }
+
+  .modal-actions {
+    display: flex; gap: 0.75rem; justify-content: flex-end;
+    margin-top: 1.5rem; padding-top: 1.25rem;
+    border-top: 1px solid rgba(160,80,40,0.2);
+  }
+  .btn-modal-cancel {
+    background: none; border: 1px solid var(--border-s);
+    color: var(--muted); padding: 0.75rem 1.4rem;
+    font-family: 'Syne', sans-serif; font-size: 0.65rem;
+    font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-modal-cancel:hover { border-color: var(--border); color: var(--parchment); }
+
+  .btn-modal-save {
+    background: linear-gradient(135deg, var(--gold-hi) 0%, var(--gold) 100%);
+    color: var(--obsidian); border: none; padding: 0.75rem 1.8rem;
+    font-family: 'Syne', sans-serif; font-size: 0.65rem;
+    font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255,220,100,0.2);
+  }
+  .btn-modal-save:hover { box-shadow: 0 6px 24px rgba(201,153,30,0.3); transform: translateY(-1px); }
+
+  .save-success {
+    display: none; text-align: center; padding: 1.5rem 0;
+  }
+  .save-success.show { display: block; }
+  .save-success-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    border: 2px solid var(--gold-hi);
+    box-shadow: 0 0 24px rgba(201,153,30,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; margin: 0 auto 1rem;
+    animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+  .save-success-title {
+    font-family: 'Playfair Display', serif; font-size: 1.3rem;
+    font-weight: 500; color: var(--off-white); margin-bottom: 0.4rem;
+  }
+  .save-success-sub {
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted);
+  }
+
+
+  /* ── DELETE ACCOUNT BUTTON ── */
+  .btn-delete-account {
+    width: 100%; margin-top: 0.6rem;
+    background: none;
+    border: 1px solid rgba(200,40,26,0.35);
+    color: #e85040;
+    padding: 0.65rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-delete-account:hover {
+    background: rgba(200,40,26,0.1);
+    border-color: rgba(200,40,26,0.65);
+    box-shadow: 0 0 16px rgba(200,40,26,0.12);
+  }
+
+  /* ── DELETE CONFIRM MODAL ── */
+  .delete-backdrop {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(4,3,10,0.9);
+    backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .delete-backdrop.open { display: flex; }
+
+  .delete-modal {
+    width: 100%; max-width: 420px;
+    background: linear-gradient(150deg, #1a0a08 0%, #120706 100%);
+    border: 1px solid rgba(200,40,26,0.4);
+    box-shadow: 0 0 0 1px rgba(200,40,26,0.1), 0 32px 80px rgba(0,0,0,0.8);
+    padding: 2rem;
+    position: relative;
+  }
+  .delete-modal::before {
+    content: 'DANGER ZONE';
+    position: absolute; top: -0.5rem; left: 1.5rem;
+    background: #120706; padding: 0 0.5rem;
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.3em; color: #e85040;
+  }
+
+  .delete-icon {
+    font-size: 2.2rem; margin-bottom: 1rem; display: block;
+  }
+  .delete-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; font-weight: 500; color: #f0e8d8;
+    margin-bottom: 0.4rem; letter-spacing: -0.01em;
+  }
+  .delete-title em { font-style: italic; color: #e85040; }
+  .delete-sub {
+    font-family: 'Crimson Pro', serif; font-size: 0.95rem;
+    color: var(--parchment); line-height: 1.75; margin-bottom: 1.5rem;
+  }
+  .delete-warning {
+    background: rgba(200,40,26,0.08);
+    border: 1px solid rgba(200,40,26,0.25);
+    padding: 0.9rem 1rem; margin-bottom: 1.5rem;
+  }
+  .delete-warning ul {
+    list-style: none; padding: 0;
+    font-family: 'DM Mono', monospace; font-size: 0.68rem;
+    color: #e85040; line-height: 1.8;
+  }
+  .delete-warning ul li::before { content: '✗ '; }
+
+  .delete-confirm-field { margin-bottom: 1.25rem; }
+  .delete-confirm-field label {
+    display: block; font-family: 'Syne', sans-serif;
+    font-size: 0.58rem; font-weight: 600; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem;
+  }
+  .delete-confirm-input {
+    width: 100%; background: rgba(10,3,2,0.8);
+    border: 1px solid rgba(200,40,26,0.2);
+    color: #f0e8d8; padding: 0.75rem 1rem;
+    font-family: 'DM Mono', monospace; font-size: 0.8rem;
+    outline: none; transition: all 0.2s;
+    letter-spacing: 0.06em;
+  }
+  .delete-confirm-input:focus { border-color: rgba(200,40,26,0.55); background: rgba(25,6,4,0.9); }
+  .delete-confirm-input::placeholder { color: rgba(255,255,255,0.2); font-style: italic; }
+  .delete-confirm-hint {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); margin-top: 0.3rem;
+  }
+  .delete-confirm-err {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: #e85040; margin-top: 0.3rem; display: none;
+  }
+  .delete-confirm-err.show { display: block; }
+
+  .delete-actions {
+    display: flex; gap: 0.75rem; justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+  .btn-delete-cancel {
+    background: none; border: 1px solid var(--border-s);
+    color: var(--muted); padding: 0.75rem 1.2rem;
+    font-family: 'Syne', sans-serif; font-size: 0.65rem;
+    font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-delete-cancel:hover { border-color: var(--border); color: var(--parchment); }
+  .btn-delete-confirm {
+    background: linear-gradient(135deg, #d42e1a 0%, #901808 100%);
+    color: #fff; border: none; padding: 0.75rem 1.5rem;
+    font-family: 'Syne', sans-serif; font-size: 0.65rem;
+    font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: inset 0 1px 0 rgba(255,100,80,0.2);
+  }
+  .btn-delete-confirm:hover { box-shadow: 0 6px 24px rgba(200,40,26,0.4); }
+  .btn-delete-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
 </style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="index.html">Keys <em>Please</em> Valet</a>
+  <a class="nav-logo" href="keys-please-valet.html">Keys <em>Please</em> Valet</a>
   <div class="nav-right">
-    <a class="nav-link" href="index.html#book">Book</a>
-    <a class="nav-link" href="index.html#how">How It Works</a>
+    <a class="nav-link" href="keys-please-valet.html#book">Book</a>
+    <a class="nav-link" href="keys-please-valet.html#how">How It Works</a>
     <a class="nav-link" href="kpv-track.html" style="color:var(--gold-hi)">Track Vehicle</a>
-    <a class="nav-book" href="index.html">Reserve Now</a>
+    <a class="nav-link" href="kpv-admin.html" style="color:rgba(201,153,30,0.5);font-size:0.58rem">Staff</a>
+    <a class="nav-book" href="keys-please-valet.html">Reserve Now</a>
   </div>
 </nav>
 
@@ -694,9 +966,140 @@
         <div class="profile-field"><span class="pf-key">Phone</span><span class="pf-val" id="pfPhone">—</span></div>
         <div class="profile-field"><span class="pf-key">Preferred Tier</span><span class="pf-val" id="pfTier">Standard</span></div>
         <div class="profile-field"><span class="pf-key">Total Bookings</span><span class="pf-val" id="pfTotal">0</span></div>
-        <button class="btn-edit-profile" onclick="showToast('Coming Soon','Profile editing will be available in the next release.')">Edit Profile</button>
+        <button class="btn-edit-profile" onclick="openEditModal()">✏️ &nbsp;Edit Profile</button>
+        <button class="btn-delete-account" onclick="openDeleteModal()">🗑 &nbsp;Delete Account</button>
       </div>
 
+    </div>
+  </div>
+</div>
+
+
+<!-- ── EDIT PROFILE MODAL ── -->
+<div class="modal-backdrop" id="editModalBackdrop" onclick="closeEditModalOnBackdrop(event)">
+  <div class="edit-modal" id="editModal">
+
+    <!-- Form view -->
+    <div id="editFormView">
+      <div class="modal-title">Edit <em>Profile</em></div>
+      <p class="modal-sub">Update your personal information, contact details, and preferences.</p>
+
+      <div class="modal-section-label">Personal Information</div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>First Name</label>
+          <input class="edit-input" id="editFirst" type="text" placeholder="First name">
+          <div class="edit-field-error" id="editFirstErr">First name is required</div>
+        </div>
+        <div class="edit-field">
+          <label>Last Name</label>
+          <input class="edit-input" id="editLast" type="text" placeholder="Last name">
+        </div>
+      </div>
+      <div class="edit-field">
+        <label>Email Address</label>
+        <input class="edit-input" id="editEmail" type="email" placeholder="your@email.com">
+        <div class="edit-field-error" id="editEmailErr">Please enter a valid email address</div>
+      </div>
+      <div class="edit-field">
+        <label>Phone Number</label>
+        <input class="edit-input" id="editPhone" type="tel" placeholder="+1 (555) 000-0000">
+      </div>
+
+      <div class="modal-section-label">Preferences</div>
+      <div class="edit-field">
+        <label>Preferred Service Tier</label>
+        <select class="edit-select" id="editTier">
+          <option value="Standard">Standard Valet</option>
+          <option value="Priority">Priority Retrieval</option>
+          <option value="VIP">VIP White Glove</option>
+        </select>
+      </div>
+
+      <div class="modal-divider"></div>
+      <div class="modal-section-label">Change Password <span style="color:var(--muted);font-size:0.55rem;letter-spacing:0.1em;text-transform:none;font-weight:400;margin-left:0.5rem;">(leave blank to keep current)</span></div>
+
+      <div class="edit-field">
+        <label>Current Password</label>
+        <div class="password-toggle">
+          <input class="edit-input" id="editCurrentPass" type="password" placeholder="Enter current password" style="padding-right:2.5rem">
+          <button class="toggle-btn" type="button" onclick="togglePassVis('editCurrentPass', this)">👁</button>
+        </div>
+        <div class="edit-field-error" id="editCurrentPassErr">Current password is incorrect</div>
+      </div>
+      <div class="edit-field-row">
+        <div class="edit-field">
+          <label>New Password</label>
+          <div class="password-toggle">
+            <input class="edit-input" id="editNewPass" type="password" placeholder="Min. 8 characters" style="padding-right:2.5rem">
+            <button class="toggle-btn" type="button" onclick="togglePassVis('editNewPass', this)">👁</button>
+          </div>
+          <div class="edit-field-error" id="editNewPassErr">Minimum 8 characters</div>
+        </div>
+        <div class="edit-field">
+          <label>Confirm New Password</label>
+          <div class="password-toggle">
+            <input class="edit-input" id="editConfirmPass" type="password" placeholder="Repeat new password" style="padding-right:2.5rem">
+            <button class="toggle-btn" type="button" onclick="togglePassVis('editConfirmPass', this)">👁</button>
+          </div>
+          <div class="edit-field-error" id="editConfirmPassErr">Passwords do not match</div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-modal-save" onclick="saveProfile()">Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Success view -->
+    <div class="save-success" id="editSuccessView">
+      <div class="save-success-icon">✓</div>
+      <div class="save-success-title">Profile Updated</div>
+      <div class="save-success-sub" id="editSuccessMsg">Your changes have been saved.</div>
+      <button class="btn-modal-save" style="margin-top:1.5rem;width:100%;" onclick="closeEditModal()">Done</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ── DELETE ACCOUNT MODAL ── -->
+<div class="delete-backdrop" id="deleteBackdrop" onclick="closeDeleteModalOnBackdrop(event)">
+  <div class="delete-modal" id="deleteModal">
+    <span class="delete-icon">⚠️</span>
+    <div class="delete-title">Delete <em>Account</em></div>
+    <p class="delete-sub">This action is permanent and cannot be undone. All your data will be erased from our system.</p>
+
+    <div class="delete-warning">
+      <ul>
+        <li>Your account and login credentials</li>
+        <li>Your personal profile information</li>
+        <li>Your entire booking history</li>
+        <li>Access to the customer portal</li>
+      </ul>
+    </div>
+
+    <div class="delete-confirm-field">
+      <label>Type your email to confirm deletion</label>
+      <input class="delete-confirm-input" id="deleteConfirmEmail"
+        type="text" placeholder="your@email.com" autocomplete="off">
+      <div class="delete-confirm-hint">This confirms you understand the action is irreversible.</div>
+      <div class="delete-confirm-err" id="deleteConfirmErr">Email does not match your account email.</div>
+    </div>
+
+    <div class="delete-confirm-field">
+      <label>Enter your password</label>
+      <input class="delete-confirm-input" id="deleteConfirmPass"
+        type="password" placeholder="••••••••" autocomplete="current-password">
+      <div class="delete-confirm-err" id="deletePassErr">Incorrect password.</div>
+    </div>
+
+    <div class="delete-actions">
+      <button class="btn-delete-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-delete-confirm" id="deleteConfirmBtn" onclick="confirmDeleteAccount()">
+        Permanently Delete
+      </button>
     </div>
   </div>
 </div>
@@ -708,47 +1111,70 @@
 </div>
 
 <script>
-  // ── Storage keys ────────────────────────────────────────────────────────────
+  // -- Storage keys -------------------------------------------------------------
   const USERS_KEY    = 'kpv_users';
   const SESSION_KEY  = 'kpv_session';
   const BOOKINGS_KEY = 'kpv_bookings';
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
-  function usersLoad()  { try { return JSON.parse(localStorage.getItem(USERS_KEY) || '[]'); } catch(e) { return []; } }
-  function usersSave(u) { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
+  // -- KPV token format validator ------------------------------------------------
+  // Valid format: KPV- followed by 3 uppercase letters then 4 digits  e.g. KPV-ABC1234
+  const TOKEN_REGEX = /^KPV-[A-Z]{3}\d{4}$/;
+
+  function isValidToken(t) {
+    return TOKEN_REGEX.test((t || '').trim().toUpperCase());
+  }
+
+  // Check a token exists in the confirmed bookings database
+  function tokenExistsInDB(token) {
+    return bookingsLoad().some(b => b.id === token && b.status !== 'cancelled');
+  }
+
+  // -- Storage helpers -----------------------------------------------------------
+  function usersLoad()   { try { return JSON.parse(localStorage.getItem(USERS_KEY)    || '[]'); } catch(e) { return []; } }
+  function usersSave(u)  { localStorage.setItem(USERS_KEY, JSON.stringify(u)); }
   function bookingsLoad(){ try { return JSON.parse(localStorage.getItem(BOOKINGS_KEY) || '[]'); } catch(e) { return []; } }
-  function sessionGet() { try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch(e) { return null; } }
-  function sessionSet(u){ localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
+  function sessionGet()  { try { return JSON.parse(localStorage.getItem(SESSION_KEY));           } catch(e) { return null; } }
+  function sessionSet(u) { localStorage.setItem(SESSION_KEY, JSON.stringify(u)); }
   function sessionClear(){ localStorage.removeItem(SESSION_KEY); }
 
-  function hashPass(p) { // lightweight scramble (not crypto – demo purposes)
+  function hashPass(p) {
     let h = 0;
     for (let i = 0; i < p.length; i++) h = (Math.imul(31, h) + p.charCodeAt(i)) | 0;
     return h.toString(36);
   }
 
-  // ── Tab switch ──────────────────────────────────────────────────────────────
+  // -- Tab switch ----------------------------------------------------------------
   function switchTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
+    document.querySelectorAll('.auth-tab').forEach((t,i) =>
+      t.classList.toggle('active', (i === 0) === (tab === 'login')));
     document.getElementById('tab-login').style.display    = tab === 'login'    ? 'block' : 'none';
     document.getElementById('tab-register').style.display = tab === 'register' ? 'block' : 'none';
   }
 
-  // ── Login ───────────────────────────────────────────────────────────────────
+  // -- Login   registered users only, no demo bypass -----------------------------
   function handleLogin() {
-    const email = document.getElementById('loginEmail').value.trim();
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
     const pass  = document.getElementById('loginPass').value;
     let ok = true;
 
     document.getElementById('loginEmailErr').classList.remove('show');
     document.getElementById('loginPassErr').classList.remove('show');
 
-    if (!email.includes('@')) { document.getElementById('loginEmailErr').classList.add('show'); ok = false; }
-    if (!pass) { document.getElementById('loginPassErr').textContent = 'Password is required'; document.getElementById('loginPassErr').classList.add('show'); ok = false; }
+    if (!email.includes('@') || !email.includes('.')) {
+      document.getElementById('loginEmailErr').textContent = 'Please enter a valid email address';
+      document.getElementById('loginEmailErr').classList.add('show');
+      ok = false;
+    }
+    if (!pass) {
+      document.getElementById('loginPassErr').textContent = 'Password is required';
+      document.getElementById('loginPassErr').classList.add('show');
+      ok = false;
+    }
     if (!ok) return;
 
     const users = usersLoad();
-    const user  = users.find(u => u.email === email);
+    // Only allow registered accounts (must have an id starting with 'u_' and a stored passHash)
+    const user = users.find(u => u.email?.toLowerCase() === email && u.id?.startsWith('u_') && u.passHash);
     if (!user || user.passHash !== hashPass(pass)) {
       document.getElementById('loginPassErr').textContent = 'Incorrect email or password';
       document.getElementById('loginPassErr').classList.add('show');
@@ -759,11 +1185,11 @@
     enterDashboard(user);
   }
 
-  // ── Register ────────────────────────────────────────────────────────────────
+  // -- Register ------------------------------------------------------------------
   function handleRegister() {
     const first = document.getElementById('regFirst').value.trim();
     const last  = document.getElementById('regLast').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
     const phone = document.getElementById('regPhone').value.trim();
     const pass  = document.getElementById('regPass').value;
     const pass2 = document.getElementById('regPassConfirm').value;
@@ -772,83 +1198,107 @@
     ['regFirstErr','regEmailErr','regPassErr','regPassConfirmErr'].forEach(id =>
       document.getElementById(id).classList.remove('show'));
 
-    if (!first) { document.getElementById('regFirstErr').classList.add('show'); ok = false; }
-    if (!email.includes('@')) { document.getElementById('regEmailErr').classList.add('show'); ok = false; }
-    if (pass.length < 8) { document.getElementById('regPassErr').classList.add('show'); ok = false; }
-    if (pass !== pass2) { document.getElementById('regPassConfirmErr').classList.add('show'); ok = false; }
+    if (!first) {
+      document.getElementById('regFirstErr').classList.add('show'); ok = false;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      document.getElementById('regEmailErr').textContent = 'Please enter a valid email address';
+      document.getElementById('regEmailErr').classList.add('show'); ok = false;
+    }
+    if (pass.length < 8) {
+      document.getElementById('regPassErr').classList.add('show'); ok = false;
+    }
+    if (pass !== pass2) {
+      document.getElementById('regPassConfirmErr').classList.add('show'); ok = false;
+    }
     if (!ok) return;
 
     const users = usersLoad();
-    if (users.find(u => u.email === email)) {
+    if (users.find(u => u.email?.toLowerCase() === email)) {
       document.getElementById('regEmailErr').textContent = 'An account with this email already exists';
       document.getElementById('regEmailErr').classList.add('show');
       return;
     }
 
     const user = {
-      id: 'u_' + Date.now(),
-      firstName: first, lastName: last,
-      email, phone,
-      passHash: hashPass(pass),
-      createdAt: new Date().toISOString(),
-      preferredTier: 'Standard'
+      id:           'u_' + Date.now(),  // always prefixed u_   marks a real registered user
+      firstName:    first,
+      lastName:     last,
+      email:        email,
+      phone:        phone,
+      passHash:     hashPass(pass),
+      createdAt:    new Date().toISOString(),
+      preferredTier:'Standard',
+      isRegistered: true,               // explicit flag
     };
     users.push(user);
     usersSave(users);
     sessionSet(user);
-    showToast('Welcome!', 'Account created for ' + first + '. You\'re now signed in.');
-    setTimeout(() => enterDashboard(user), 600);
+    showToast('Account Created', 'Welcome, ' + first + '! Please sign in with your new credentials.');
+    // Reset form to login tab with email pre-filled so user can sign in immediately
+    setTimeout(() => {
+      resetPortal(null, null, 'login');
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('loginPass').focus();
+    }, 800);
   }
 
-  // ── Demo login ───────────────────────────────────────────────────────────────
+  // -- Demo login REMOVED   only registered accounts allowed ---------------------
+  // The demo button now redirects to the register tab with a hint
   function demoLogin() {
-    const demo = {
-      id: 'u_demo', firstName: 'Alexandra', lastName: 'Voss',
-      email: 'alex.voss@example.com', phone: '+1 (212) 555-0199',
-      passHash: '', createdAt: '2024-09-15T10:00:00.000Z',
-      preferredTier: 'Priority'
-    };
-    sessionSet(demo);
-    enterDashboard(demo);
-    showToast('Demo Mode', 'Signed in as Alexandra Voss');
+    switchTab('register');
+    showToast('Register Required', 'Please create a free account to access the portal.');
   }
 
-  // ── Forgot password ──────────────────────────────────────────────────────────
+  // -- Forgot password -----------------------------------------------------------
   function forgotPassword() {
     const email = document.getElementById('loginEmail').value.trim();
-    if (email) { showToast('Reset Sent', 'A password reset link has been sent to ' + email); }
-    else { showToast('Enter Email', 'Please enter your email address above first.'); }
+    if (!email) { showToast('Enter Email', 'Enter your email address above first.'); return; }
+    const users = usersLoad();
+    const user  = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    if (!user) { showToast('Not Found', 'No registered account found for that email.'); return; }
+    showToast('Reset Sent', 'A password reset link has been sent to ' + email + '.');
   }
 
-  // ── Dashboard ────────────────────────────────────────────────────────────────
+  // -- Dashboard entry -----------------------------------------------------------
   function enterDashboard(user) {
+    // Guard: must be a real registered user
+    if (!user || !user.id?.startsWith('u_') || !user.isRegistered) {
+      sessionClear();
+      showToast('Access Denied', 'Only registered accounts can access the portal.');
+      return;
+    }
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-dashboard').classList.add('active');
     populateDashboard(user);
   }
 
   function populateDashboard(user) {
-    // Greeting
-    const hour = new Date().getHours();
+    const hour  = new Date().getHours();
     const greet = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-    document.getElementById('timeGreet').textContent  = greet;
+    document.getElementById('timeGreet').textContent     = greet;
     document.getElementById('dashFirstName').textContent = user.firstName;
     document.getElementById('dashSub').textContent =
       'Welcome back to Keys Please Valet, ' + [user.firstName, user.lastName].filter(Boolean).join(' ') + '.';
 
-    // Profile
-    const initials = ((user.firstName || '')[0] + (user.lastName || '')[0]).toUpperCase() || 'G';
+    // Profile panel
+    const initials = ((user.firstName||'')[0] + (user.lastName||'')[0]).toUpperCase() || 'KP';
     document.getElementById('profileAvatar').textContent = initials;
     document.getElementById('profileName').textContent   = [user.firstName, user.lastName].filter(Boolean).join(' ');
     document.getElementById('profileEmail').textContent  = user.email;
-    document.getElementById('pfPhone').textContent  = user.phone   || '—';
-    document.getElementById('pfTier').textContent   = user.preferredTier || 'Standard';
-    document.getElementById('pfSince').textContent  = user.createdAt
-      ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—';
+    document.getElementById('pfPhone').textContent       = user.phone || ' ';
+    document.getElementById('pfTier').textContent        = user.preferredTier || 'Standard';
+    document.getElementById('pfSince').textContent       = user.createdAt
+      ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ' ';
 
-    // Bookings – match by email
-    const all = bookingsLoad();
-    const mine = all.filter(b => b.guest?.email?.toLowerCase() === user.email?.toLowerCase());
+    // -- STRICT: only show bookings where guest.email matches this account's email
+    //    AND the booking has a valid KPV token (format + exists in DB)
+    const all  = bookingsLoad();
+    const mine = all.filter(b => {
+      const emailMatch  = b.guest?.email?.toLowerCase() === user.email?.toLowerCase();
+      const validToken  = isValidToken(b.id);
+      return emailMatch && validToken;
+    });
 
     const confirmed = mine.filter(b => b.status === 'confirmed').length;
     const cancelled = mine.filter(b => b.status === 'cancelled').length;
@@ -859,116 +1309,455 @@
     document.getElementById('dsCancelled').textContent = cancelled;
     document.getElementById('dsSpent').textContent     = '$' + spent;
     document.getElementById('pfTotal').textContent     = mine.length;
-    document.getElementById('bookingCountBadge').textContent = mine.length + ' booking' + (mine.length !== 1 ? 's' : '');
+    document.getElementById('bookingCountBadge').textContent =
+      mine.length + ' booking' + (mine.length !== 1 ? 's' : '');
 
-    renderBookingList(mine, user);
+    renderBookingList(mine);
   }
 
-  function renderBookingList(mine, user) {
+  function renderBookingList(mine) {
     const list = document.getElementById('bookingList');
     if (!mine.length) {
-      list.innerHTML = `<div class="empty-bookings">No bookings found for this account.<br>
-        <a href="keys-please-valet.html" style="color:var(--gold-hi);text-decoration:none;font-size:0.88rem;">Make your first reservation →</a></div>`;
+      list.innerHTML = `
+        <div class="empty-bookings">
+          No confirmed bookings found for this account.<br>
+          <a href="keys-please-valet.html" style="color:var(--gold-hi);text-decoration:none;font-size:0.88rem;">
+            Make your first reservation ->
+          </a>
+        </div>`;
       return;
     }
 
     list.innerHTML = mine.map(b => {
-      const vehicle = [b.vehicle?.year, b.vehicle?.color, b.vehicle?.make, b.vehicle?.model].filter(Boolean).join(' ') || '—';
-      const date    = b.schedule?.date || '—';
+      const vehicle = [b.vehicle?.year, b.vehicle?.color, b.vehicle?.make, b.vehicle?.model].filter(Boolean).join(' ') || ' ';
+      const date    = b.schedule?.date   || ' ';
       const arrival = b.schedule?.arrival || '';
-      const created = b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
-      const st      = b.status || 'confirmed';
+      const created = b.createdAt
+        ? new Date(b.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ' ';
+      const st = b.status || 'confirmed';
       return `
         <div class="booking-card status-${st}">
           <div class="bc-top">
             <div class="bc-token">${b.id}</div>
             <span class="bc-status ${st}">${st}</span>
           </div>
-          <div class="bc-venue">${b.venue || '—'}</div>
+          <div class="bc-venue">${b.venue || ' '}</div>
           <div class="bc-meta">
-            <span>📅 ${date}${arrival ? ' · ' + arrival : ''}</span>
-            <span>🚗 ${vehicle}</span>
-            <span>🔖 ${b.vehicle?.plate || '—'}</span>
+            <span> ${date}${arrival ? '  .  ' + arrival : ''}</span>
+            <span> ${vehicle}</span>
+            <span> ${b.vehicle?.plate || ' '}</span>
           </div>
           <div class="bc-bottom">
-            <span class="bc-tier">${b.tier || '—'}</span>
-            <span class="bc-total">$${b.total ?? '—'}</span>
-            ${st === 'confirmed' ? `<button class="btn-cancel-booking" onclick="cancelBooking('${b.id}')">Cancel</button>` : `<span style="font-size:0.6rem;color:var(--dim)">${created}</span>`}
+            <span class="bc-tier">${b.tier || ' '}</span>
+            <span class="bc-total">$${b.total ?? ' '}</span>
+            <div style="display:flex;gap:0.75rem;align-items:center;">
+              ${st === 'confirmed'
+                ? `<button class="btn-cancel-booking" onclick="cancelBooking('${b.id}')">Cancel</button>`
+                : `<span style="font-size:0.6rem;color:var(--dim)">${created}</span>`}
+              ${st === 'confirmed' ? `<a href="kpv-track.html?token=${b.id}" target="_blank" style="font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold-hi);text-decoration:none;border:1px solid rgba(201,153,30,0.3);padding:0.15rem 0.5rem;transition:all 0.2s;" onmouseover="this.style.background='rgba(201,153,30,0.1)'" onmouseout="this.style.background=''"> Track</a>` : ''}
+            </div>
           </div>
         </div>`;
     }).join('');
   }
 
+  // cancelBooking   only allowed for bookings owned by current user
   function cancelBooking(id) {
+    const user = sessionGet();
+    if (!user) return;
+
     const all = bookingsLoad();
-    const idx = all.findIndex(b => b.id === id);
-    if (idx === -1) return;
+    const idx = all.findIndex(b =>
+      b.id === id &&
+      b.guest?.email?.toLowerCase() === user.email?.toLowerCase() &&
+      isValidToken(b.id)
+    );
+    if (idx === -1) {
+      showToast('Error', 'Unable to cancel   booking not found or not yours.'); return;
+    }
     all[idx].status = 'cancelled';
     localStorage.setItem(BOOKINGS_KEY, JSON.stringify(all));
-    const user = sessionGet();
-    if (user) populateDashboard(user);
-    showToast('Booking Cancelled', 'Your booking ' + id + ' has been cancelled.');
+    populateDashboard(user);
+    showToast('Booking Cancelled', 'Booking ' + id + ' has been cancelled.');
   }
 
-  // ── Retrieval ────────────────────────────────────────────────────────────────
+  // -- Retrieval   validates token format AND must exist in confirmed bookings ----
   function requestRetrieval() {
-    const raw   = document.getElementById('retrieveInput').value.trim().toUpperCase();
-    const status = document.getElementById('retrieveStatus');
-    status.className = 'retrieve-status';
+    const user    = sessionGet();
+    const raw     = document.getElementById('retrieveInput').value.trim().toUpperCase();
+    const statusEl = document.getElementById('retrieveStatus');
+    statusEl.className = 'retrieve-status';
 
-    if (!raw) {
-      status.className = 'retrieve-status error';
-      status.textContent = 'Please enter your valet token.';
+    // 1. Must be logged in
+    if (!user) {
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'You must be signed in to request retrieval.';
       return;
     }
 
-    const all    = bookingsLoad();
+    // 2. Empty check
+    if (!raw) {
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'Please enter your valet token.';
+      return;
+    }
+
+    // 3. Format validation   must match KPV-XXX0000
+    if (!isValidToken(raw)) {
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'Invalid token format. Tokens must start with KPV- followed by 3 letters and 4 digits (e.g. KPV-ABC1234).';
+      return;
+    }
+
+    // 4. Token must exist in the confirmed bookings database
+    const all     = bookingsLoad();
     const booking = all.find(b => b.id === raw);
 
     if (!booking) {
-      status.className = 'retrieve-status error';
-      status.textContent = 'Token not found. Please check and try again.';
-      return;
-    }
-    if (booking.status === 'cancelled') {
-      status.className = 'retrieve-status error';
-      status.textContent = 'This booking has been cancelled.';
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'Token not found. Only tokens generated from confirmed reservations are accepted.';
       return;
     }
 
-    const vehicle = [booking.vehicle?.color, booking.vehicle?.make, booking.vehicle?.model].filter(Boolean).join(' ') || 'your vehicle';
-    status.className = 'retrieve-status success';
-    status.innerHTML = '✓ Retrieval requested!<br><span style="opacity:0.8">Your ' + vehicle + ' will be ready at the entrance in approx. 4 minutes.</span>';
+    // 5. Must belong to the signed-in user
+    if (booking.guest?.email?.toLowerCase() !== user.email?.toLowerCase()) {
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'This token does not belong to your account.';
+      return;
+    }
+
+    // 6. Must not be cancelled
+    if (booking.status === 'cancelled') {
+      statusEl.className = 'retrieve-status error';
+      statusEl.textContent = 'This booking has been cancelled and cannot be retrieved.';
+      return;
+    }
+
+    // v All checks passed
+    const vehicle = [booking.vehicle?.color, booking.vehicle?.make, booking.vehicle?.model]
+      .filter(Boolean).join(' ') || 'your vehicle';
+    statusEl.className = 'retrieve-status success';
+    statusEl.innerHTML = 'v Retrieval requested for ' + raw + '!<br><span style="opacity:0.8">Your '
+      + vehicle + ' will be ready at the entrance in approx. 4 minutes.</span>';
+
     showToast('On Its Way!', 'Your ' + vehicle + ' is being retrieved now.');
-    setTimeout(() => { if (confirm("Open live GPS tracker for " + raw + "?")) window.open("kpv-track.html?token=" + raw, "_blank"); }, 800);
+    setTimeout(() => {
+      if (confirm('Open live GPS tracker for ' + raw + '?'))
+        window.open('kpv-track.html?token=' + raw, '_blank');
+    }, 800);
   }
 
-  // ── Logout ───────────────────────────────────────────────────────────────────
-  function handleLogout() {
+  // -- Logout --------------------------------------------------------------------
+
+  // -- Admin Notification System ----------------------------------------------
+  const NOTIF_KEY = 'kpv_admin_notifications';
+
+  function notifLoad() {
+    try { return JSON.parse(localStorage.getItem(NOTIF_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function notifPush(type, message, detail) {
+    const notifs = notifLoad();
+    notifs.unshift({
+      id:        'n_' + Date.now(),
+      type,       // 'profile_update' | 'account_delete'
+      message,
+      detail,
+      createdAt:  new Date().toISOString(),
+      read:       false,
+    });
+    localStorage.setItem(NOTIF_KEY, JSON.stringify(notifs));
+  }
+
+  // -- Delete Account Modal ---------------------------------------------------
+  function openDeleteModal() {
+    document.getElementById('deleteConfirmEmail').value = '';
+    document.getElementById('deleteConfirmPass').value  = '';
+    document.getElementById('deleteConfirmErr').classList.remove('show');
+    document.getElementById('deletePassErr').classList.remove('show');
+    document.getElementById('deleteBackdrop').classList.add('open');
+    document.getElementById('deleteConfirmEmail').focus();
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('deleteBackdrop').classList.remove('open');
+  }
+
+  function closeDeleteModalOnBackdrop(e) {
+    if (e.target === document.getElementById('deleteBackdrop')) closeDeleteModal();
+  }
+
+  function confirmDeleteAccount() {
+    const user         = sessionGet();
+    if (!user) return;
+
+    const typedEmail   = document.getElementById('deleteConfirmEmail').value.trim().toLowerCase();
+    const typedPass    = document.getElementById('deleteConfirmPass').value;
+    let valid          = true;
+
+    document.getElementById('deleteConfirmErr').classList.remove('show');
+    document.getElementById('deletePassErr').classList.remove('show');
+
+    if (typedEmail !== user.email) {
+      document.getElementById('deleteConfirmErr').classList.add('show'); valid = false;
+    }
+    if (hashPass(typedPass) !== user.passHash) {
+      document.getElementById('deletePassErr').classList.add('show'); valid = false;
+    }
+    if (!valid) return;
+
+    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
+
+    // -- Notify admin BEFORE deleting -----------------------------------------
+    notifPush(
+      'account_delete',
+      'Account Deleted: ' + fullName,
+      {
+        userId:    user.id,
+        name:      fullName,
+        email:     user.email,
+        phone:     user.phone || ' ',
+        memberSince: user.createdAt,
+        deletedAt: new Date().toISOString(),
+      }
+    );
+
+    // -- Remove user from DB ---------------------------------------------------
+    const users    = usersLoad().filter(u => u.id !== user.id);
+    usersSave(users);
+
+    // -- Clear session ---------------------------------------------------------
     sessionClear();
+
+    // -- Close modal and reset portal -----------------------------------------
+    closeDeleteModal();
+    resetPortal(
+      'Account Deleted',
+      'Your account has been permanently removed. We hope to see you again.',
+      'register'
+    );
+  }
+
+  // -- Notify admin on profile save (patch saveProfile to fire notification) --
+  const _origSaveProfile = typeof saveProfile === 'function' ? saveProfile : null;
+
+  // -- Edit Profile Modal --------------------------------------------------------
+  function openEditModal() {
+    const user = sessionGet();
+    if (!user) return;
+
+    // Pre-fill fields
+    document.getElementById('editFirst').value = user.firstName || '';
+    document.getElementById('editLast').value  = user.lastName  || '';
+    document.getElementById('editEmail').value = user.email     || '';
+    document.getElementById('editPhone').value = user.phone     || '';
+    document.getElementById('editTier').value  = user.preferredTier || 'Standard';
+
+    // Clear password fields and errors
+    ['editCurrentPass','editNewPass','editConfirmPass'].forEach(id =>
+      document.getElementById(id).value = '');
+    ['editFirstErr','editEmailErr','editCurrentPassErr','editNewPassErr','editConfirmPassErr'].forEach(id =>
+      document.getElementById(id).classList.remove('show'));
+
+    // Show form, hide success
+    document.getElementById('editFormView').style.display    = 'block';
+    document.getElementById('editSuccessView').classList.remove('show');
+
+    document.getElementById('editModalBackdrop').classList.add('open');
+    document.getElementById('editFirst').focus();
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModalBackdrop').classList.remove('open');
+  }
+
+  function closeEditModalOnBackdrop(e) {
+    if (e.target === document.getElementById('editModalBackdrop')) closeEditModal();
+  }
+
+  function togglePassVis(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const show  = input.type === 'password';
+    input.type  = show ? 'text' : 'password';
+    btn.textContent = show ? '' : '';
+  }
+
+  function saveProfile() {
+    const user = sessionGet();
+    if (!user) return;
+
+    const first       = document.getElementById('editFirst').value.trim();
+    const last        = document.getElementById('editLast').value.trim();
+    const email       = document.getElementById('editEmail').value.trim().toLowerCase();
+    const phone       = document.getElementById('editPhone').value.trim();
+    const tier        = document.getElementById('editTier').value;
+    const currentPass = document.getElementById('editCurrentPass').value;
+    const newPass     = document.getElementById('editNewPass').value;
+    const confirmPass = document.getElementById('editConfirmPass').value;
+
+    // Clear all errors
+    ['editFirstErr','editEmailErr','editCurrentPassErr','editNewPassErr','editConfirmPassErr'].forEach(id =>
+      document.getElementById(id).classList.remove('show'));
+
+    let valid = true;
+
+    // Validate required fields
+    if (!first) {
+      document.getElementById('editFirstErr').classList.add('show'); valid = false;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      document.getElementById('editEmailErr').classList.add('show'); valid = false;
+    }
+
+    // Check email uniqueness (allow keeping same email)
+    if (email !== user.email) {
+      const others = usersLoad().filter(u => u.id !== user.id);
+      if (others.find(u => u.email === email)) {
+        document.getElementById('editEmailErr').textContent = 'That email is already used by another account';
+        document.getElementById('editEmailErr').classList.add('show'); valid = false;
+      }
+    }
+
+    // Password change (only if any password field filled)
+    const changingPassword = currentPass || newPass || confirmPass;
+    if (changingPassword) {
+      if (user.passHash !== hashPass(currentPass)) {
+        document.getElementById('editCurrentPassErr').classList.add('show'); valid = false;
+      }
+      if (newPass.length < 8) {
+        document.getElementById('editNewPassErr').classList.add('show'); valid = false;
+      }
+      if (newPass !== confirmPass) {
+        document.getElementById('editConfirmPassErr').classList.add('show'); valid = false;
+      }
+    }
+
+    if (!valid) return;
+
+    // Build updated user object
+    const updatedUser = {
+      ...user,
+      firstName:     first,
+      lastName:      last,
+      email:         email,
+      phone:         phone,
+      preferredTier: tier,
+      ...(changingPassword && newPass.length >= 8 ? { passHash: hashPass(newPass) } : {}),
+    };
+
+    // Persist to users DB
+    const users   = usersLoad();
+    const idx     = users.findIndex(u => u.id === user.id);
+    if (idx !== -1) users[idx] = updatedUser;
+    usersSave(users);
+
+    // Update session
+    sessionSet(updatedUser);
+
+    // Refresh dashboard profile panel
+    populateDashboard(updatedUser);
+
+    // -- Notify admin of profile change -------------------------------------
+    const changes = [];
+    if (first !== user.firstName || last !== user.lastName) changes.push('name');
+    if (email !== user.email) changes.push('email');
+    if (phone !== (user.phone||'')) changes.push('phone');
+    if (tier !== user.preferredTier) changes.push('preferred tier');
+    if (changingPassword) changes.push('password');
+    notifPush(
+      'profile_update',
+      'Profile Updated: ' + [first, last].filter(Boolean).join(' '),
+      {
+        userId:   updatedUser.id,
+        name:     [first, last].filter(Boolean).join(' '),
+        email:    email,
+        changes:  changes.join(', ') || 'minor update',
+        updatedAt: new Date().toISOString(),
+      }
+    );
+
+    // Show success view
+    document.getElementById('editFormView').style.display = 'none';
+    const successMsg = changingPassword
+      ? 'Profile and password updated successfully.'
+      : 'Your profile details have been saved.';
+    document.getElementById('editSuccessMsg').textContent = successMsg;
+    document.getElementById('editSuccessView').classList.add('show');
+  }
+
+  // -- Full portal reset   clears session and returns to a clean login screen ---
+  function resetPortal(toastTitle, toastMsg, defaultTab) {
+    sessionClear();
+
+    // Switch screens
     document.getElementById('screen-dashboard').classList.remove('active');
     document.getElementById('screen-login').classList.add('active');
+
+    // Clear all login fields
     document.getElementById('loginEmail').value = '';
     document.getElementById('loginPass').value  = '';
-    document.getElementById('retrieveInput').value = '';
+    document.getElementById('loginEmailErr').classList.remove('show');
+    document.getElementById('loginPassErr').classList.remove('show');
+
+    // Clear all register fields
+    document.getElementById('regFirst').value       = '';
+    document.getElementById('regLast').value        = '';
+    document.getElementById('regEmail').value       = '';
+    document.getElementById('regPhone').value       = '';
+    document.getElementById('regPass').value        = '';
+    document.getElementById('regPassConfirm').value = '';
+    ['regFirstErr','regEmailErr','regPassErr','regPassConfirmErr'].forEach(id =>
+      document.getElementById(id).classList.remove('show'));
+
+    // Clear retrieval panel
+    document.getElementById('retrieveInput').value      = '';
     document.getElementById('retrieveStatus').className = 'retrieve-status';
-    showToast('Signed Out', 'See you next time.');
+    document.getElementById('retrieveStatus').textContent = '';
+
+    // Switch to requested tab (default: login)
+    switchTab(defaultTab || 'login');
+
+    if (toastTitle) showToast(toastTitle, toastMsg || '');
   }
 
-  // ── Toast ────────────────────────────────────────────────────────────────────
+  function handleLogout() {
+    resetPortal('Signed Out', 'See you next time.', 'login');
+  }
+
+  // -- Toast ---------------------------------------------------------------------
   function showToast(title, msg) {
     document.getElementById('toastTitle').textContent = title;
     document.getElementById('toastMsg').textContent   = msg;
     const t = document.getElementById('toast');
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 4000);
+    setTimeout(() => t.classList.remove('show'), 4500);
   }
 
-  // ── Auto-login if session exists ─────────────────────────────────────────────
+  // -- Auto-login   only for verified registered sessions ------------------------
   (function init() {
     const session = sessionGet();
-    if (session) enterDashboard(session);
+    if (session && session.id?.startsWith('u_') && session.isRegistered) {
+      // Re-verify account still exists in users DB (prevent stale sessions)
+      const users = usersLoad();
+      const fresh = users.find(u => u.id === session.id);
+      if (fresh) { enterDashboard(fresh); }
+      else       { sessionClear(); } // account was deleted   clear session silently
+    } else {
+      sessionClear(); // clear any legacy/demo sessions
+      switchTab('login'); // always start on login tab
+    }
   })();
 </script>
+
+<footer style="padding:2rem 3rem;border-top:1px solid rgba(201,153,30,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:rgba(4,3,10,0.6)">
+  <a href="keys-please-valet.html" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:#f0e8d8;text-decoration:none">Keys <em style="font-style:italic;color:#e8bb48">Please</em> Valet</a>
+  <nav style="display:flex;gap:1.5rem;flex-wrap:wrap">
+    <a href="keys-please-valet.html" style="font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060;text-decoration:none">Book</a>
+    <a href="keys-please-valet.html#how" style="font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060;text-decoration:none">How It Works</a>
+    <a href="kpv-track.html" style="font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060;text-decoration:none">Track Vehicle</a>
+    <a href="kpv-portal.html" style="font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#c9991e;text-decoration:none">My Account</a>
+    <a href="kpv-admin.html" style="font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:rgba(201,153,30,0.4);text-decoration:none">Staff</a>
+  </nav>
+  <span style="font-family:'DM Mono',monospace;font-size:0.6rem;color:#3a3428">Keys Please Valet &copy; 2025</span>
+</footer>
 </body>
 </html>

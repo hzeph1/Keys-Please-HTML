@@ -3,867 +3,601 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KPV Admin — Bookings Database</title>
+<title>KPV Admin -- Bookings Database</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --obsidian: #04030a;
-    --deep:     #0e0c18;
-    --surface:  #131120;
-    --card:     #16121e;
-    --choc:     #1a0d08;
-    --off-white:#f0e8d8;
-    --parchment:#c8bfae;
-    --muted:    #7a7060;
-    --gold:     #c9991e;
-    --gold-hi:  #e8bb48;
-    --gold-dim: #6a4e10;
-    --crimson:  #c8281a;
-    --crimson-dim: #6a1008;
-    --green:    #2a7a4a;
-    --green-hi: #48bb78;
-    --amber:    #b86a10;
-    --amber-hi: #e8921e;
-    --border:   rgba(201,153,30,0.18);
-    --border-s: rgba(255,255,255,0.06);
-  }
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--obsidian);
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
-      linear-gradient(160deg, #0e0c18 0%, #04030a 50%, #080612 100%);
-    color: var(--off-white);
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    min-height: 100vh;
-  }
-
-  /* ── HEADER ── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.5rem 2.5rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(4,3,10,0.96);
-    backdrop-filter: blur(12px);
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  }
-
-  .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-  .logo em { font-style: italic; color: #e8321f; }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-  }
-
-  .admin-badge {
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--gold);
-    border: 1px solid var(--gold-dim);
-    padding: 0.3rem 0.75rem;
-    background: rgba(201,153,30,0.06);
-  }
-
-  .live-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--green-hi);
-    box-shadow: 0 0 8px var(--green-hi);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-  .header-time {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--muted);
-  }
-
-  /* ── LAYOUT ── */
-  .admin-wrap {
-    padding: 2rem 2.5rem;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-
-  /* ── STATS ROW ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  .stat-card {
-    background: linear-gradient(145deg, #16121e 0%, #0e0c18 100%);
-    border: 1px solid var(--border-s);
-    padding: 1.25rem 1.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .stat-card:hover { border-color: var(--border); }
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-  .stat-card.gold::before   { background: linear-gradient(to right, transparent, var(--gold-hi), transparent); }
-  .stat-card.green::before  { background: linear-gradient(to right, transparent, var(--green-hi), transparent); }
-  .stat-card.red::before    { background: linear-gradient(to right, transparent, var(--crimson), transparent); }
-  .stat-card.amber::before  { background: linear-gradient(to right, transparent, var(--amber-hi), transparent); }
-  .stat-card.blue::before   { background: linear-gradient(to right, transparent, #6ab4e8, transparent); }
-
-  .stat-label {
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.6rem;
-  }
-  .stat-val {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--off-white);
-  }
-  .stat-val.gold  { color: var(--gold-hi); }
-  .stat-val.green { color: var(--green-hi); }
-  .stat-val.red   { color: #e85040; }
-
-  /* ── TOOLBAR ── */
-  .toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .toolbar-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-weight: 500;
-    color: var(--off-white);
-  }
-
-  .record-count {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--muted);
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border-s);
-    padding: 0.2rem 0.6rem;
-  }
-
-  .toolbar-right {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
-  .search-box {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border-s);
-    color: var(--off-white);
-    padding: 0.55rem 1rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    outline: none;
-    width: 220px;
-    transition: border-color 0.2s;
-  }
-  .search-box:focus { border-color: var(--gold); }
-  .search-box::placeholder { color: var(--muted); }
-
-  .filter-select {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border-s);
-    color: var(--off-white);
-    padding: 0.55rem 1rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.68rem;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .filter-select:focus { border-color: var(--gold); }
-  .filter-select option { background: #0e0c18; }
-
-  .btn-export {
-    background: linear-gradient(135deg, rgba(201,153,30,0.15) 0%, rgba(201,153,30,0.05) 100%);
-    border: 1px solid var(--gold-dim);
-    color: var(--gold-hi);
-    padding: 0.55rem 1.2rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-export:hover {
-    background: linear-gradient(135deg, rgba(201,153,30,0.25) 0%, rgba(201,153,30,0.12) 100%);
-    box-shadow: 0 0 16px rgba(201,153,30,0.15);
-  }
-
-  .btn-clear {
-    background: rgba(200,40,26,0.1);
-    border: 1px solid rgba(200,40,26,0.3);
-    color: #e85040;
-    padding: 0.55rem 1rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-clear:hover { background: rgba(200,40,26,0.2); }
-
-  /* ── TABLE ── */
-  .table-wrap {
-    background: linear-gradient(145deg, #131120 0%, #0e0c18 100%);
-    border: 1px solid var(--border-s);
-    overflow-x: auto;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,153,30,0.06);
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.75rem;
-  }
-
-  thead tr {
-    border-bottom: 1px solid rgba(201,153,30,0.2);
-    background: rgba(201,153,30,0.04);
-  }
-
-  th {
-    padding: 0.9rem 1rem;
-    text-align: left;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--gold);
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.2s;
-  }
-  th:hover { color: var(--gold-hi); }
-  th .sort-arrow { opacity: 0.4; margin-left: 0.3rem; }
-  th.sorted .sort-arrow { opacity: 1; }
-
-  td {
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--border-s);
-    font-family: 'DM Mono', monospace;
-    color: var(--parchment);
-    vertical-align: middle;
-    white-space: nowrap;
-  }
-
-  tr:last-child td { border-bottom: none; }
-
-  tbody tr {
-    transition: background 0.15s;
-    cursor: pointer;
-  }
-  tbody tr:hover { background: rgba(201,153,30,0.04); }
-  tbody tr.expanded { background: rgba(201,153,30,0.05); }
-
-  .token-cell {
-    font-family: 'DM Mono', monospace;
-    font-weight: 500;
-    color: var(--gold-hi);
-    font-size: 0.72rem;
-    letter-spacing: 0.06em;
-  }
-
-  .guest-name {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--off-white);
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
-  .status-confirmed  { background: rgba(42,122,74,0.2);  color: var(--green-hi); border: 1px solid rgba(42,122,74,0.4); }
-  .status-pending    { background: rgba(184,106,16,0.2); color: var(--amber-hi); border: 1px solid rgba(184,106,16,0.4); }
-  .status-cancelled  { background: rgba(200,40,26,0.15); color: #e85040;         border: 1px solid rgba(200,40,26,0.3); }
-
-  .tier-pill {
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    padding: 0.15rem 0.5rem;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: var(--parchment);
-  }
-  .tier-vip      { border-color: rgba(201,153,30,0.4); color: var(--gold-hi); }
-  .tier-priority { border-color: rgba(180,90,50,0.4); color: #d4a878; }
-
-  .amount-cell {
-    font-family: 'Playfair Display', serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--off-white);
-  }
-
-  /* ── EXPANDED ROW ── */
-  .detail-row { display: none; }
-  .detail-row.open { display: table-row; }
-  .detail-row td {
-    background: rgba(26,13,8,0.6);
-    border-bottom: 2px solid rgba(201,153,30,0.15);
-    padding: 1.25rem 1.5rem;
-    white-space: normal;
-  }
-
-  .detail-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
-  }
-
-  .detail-section h4 {
-    font-family: 'Syne', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 1px solid rgba(201,153,30,0.15);
-  }
-
-  .detail-row-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    margin-bottom: 0.6rem;
-  }
-  .detail-key {
-    font-size: 0.58rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .detail-val {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--parchment);
-  }
-  .detail-val.hi { color: var(--off-white); font-weight: 500; }
-
-  .detail-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    grid-column: span 4;
-  }
-
-  .btn-sm {
-    padding: 0.4rem 0.9rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border: 1px solid;
-    transition: all 0.2s;
-  }
-  .btn-sm.confirm  { border-color: rgba(42,122,74,0.5); color: var(--green-hi); background: rgba(42,122,74,0.1); }
-  .btn-sm.confirm:hover { background: rgba(42,122,74,0.2); }
-  .btn-sm.cancel   { border-color: rgba(200,40,26,0.4); color: #e85040; background: rgba(200,40,26,0.08); }
-  .btn-sm.cancel:hover { background: rgba(200,40,26,0.18); }
-  .btn-sm.delete   { border-color: rgba(255,255,255,0.1); color: var(--muted); background: transparent; }
-  .btn-sm.delete:hover { border-color: rgba(200,40,26,0.4); color: #e85040; }
-
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    text-align: center;
-    padding: 5rem 2rem;
-    border: 1px solid var(--border-s);
-    background: linear-gradient(145deg, #131120 0%, #0e0c18 100%);
-  }
-  .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
-  .empty-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.4rem;
-    font-weight: 500;
-    color: var(--off-white);
-    margin-bottom: 0.5rem;
-  }
-  .empty-sub {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-  .empty-link {
-    display: inline-block;
-    margin-top: 1.5rem;
-    padding: 0.7rem 1.5rem;
-    background: linear-gradient(135deg, var(--gold-hi) 0%, var(--gold) 100%);
-    color: var(--obsidian);
-    font-family: 'Syne', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-  }
-  .empty-link:hover { box-shadow: 0 6px 24px rgba(201,153,30,0.3); }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 2rem; right: 2rem;
-    background: linear-gradient(135deg, #13112a 0%, #08060f 100%);
-    border: 1px solid var(--gold);
-    padding: 0.9rem 1.4rem;
-    font-size: 0.72rem;
-    z-index: 200;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s ease;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-  }
-  .toast.show { transform: translateY(0); opacity: 1; }
-  .toast-title { color: var(--gold-hi); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.25rem; }
-  .toast-msg { color: var(--off-white); font-family: 'DM Mono', monospace; font-size: 0.7rem; }
-
-  /* ── MODAL CONFIRM ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(4,3,10,0.85);
-    backdrop-filter: blur(4px);
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: linear-gradient(145deg, #1a1630 0%, #0e0c18 100%);
-    border: 1px solid var(--border);
-    padding: 2rem;
-    max-width: 380px;
-    width: 90%;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.7);
-  }
-  .modal h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: var(--off-white);
-    margin-bottom: 0.75rem;
-  }
-  .modal p {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-bottom: 1.5rem;
-  }
-  .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-
-  @media (max-width: 900px) {
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .detail-grid { grid-template-columns: repeat(2, 1fr); }
-    .detail-actions { grid-column: span 2; }
-    .admin-wrap { padding: 1rem; }
-    header { padding: 1rem 1.25rem; }
-  }
+:root {
+  --obsidian:#04030a; --deep:#0e0c18; --surface:#131120;
+  --off-white:#f0e8d8; --parchment:#c8bfae; --muted:#7a7060;
+  --gold:#c9991e; --gold-hi:#e8bb48; --gold-dim:#6a4e10;
+  --crimson:#c8281a; --green-hi:#48bb78; --amber-hi:#e8921e;
+  --border:rgba(201,153,30,0.2); --border-s:rgba(255,255,255,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#04030a;color:#f0e8d8;font-family:'Syne',sans-serif;font-size:14px;min-height:100vh}
+.kpv-nav{position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:rgba(4,3,10,0.97);border-bottom:1px solid rgba(201,153,30,0.2);backdrop-filter:blur(12px);box-shadow:0 4px 24px rgba(0,0,0,0.5)}
+.kpv-nav-logo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;text-decoration:none;color:#f0e8d8}
+.kpv-nav-logo em{font-style:italic;color:#e8bb48}
+.kpv-nav-links{display:flex;align-items:center;gap:1.5rem}
+.kpv-nav-link{font-size:0.65rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#7a7060;text-decoration:none;transition:color 0.2s}
+.kpv-nav-link:hover,.kpv-nav-link.active{color:#e8bb48}
+.kpv-nav-book{background:linear-gradient(135deg,#d42e1a,#a01e12);color:#fff;padding:0.45rem 1.1rem;font-family:'Syne',sans-serif;font-size:0.62rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;transition:all 0.2s}
+header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 2.5rem;border-bottom:1px solid rgba(201,153,30,0.2);background:rgba(4,3,10,0.96);backdrop-filter:blur(12px)}
+.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700}
+.logo em{font-style:italic;color:#e8bb48}
+.header-right{display:flex;align-items:center;gap:1rem}
+.admin-badge{font-size:0.6rem;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;color:#c9991e;border:1px solid rgba(201,153,30,0.35);padding:0.3rem 0.75rem;background:rgba(201,153,30,0.06)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#48bb78;box-shadow:0 0 8px #48bb78;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.header-time,.admin-user-label{font-family:'DM Mono',monospace;font-size:0.7rem;color:#7a7060}
+.btn-notif{position:relative;background:none;border:1px solid rgba(255,255,255,0.07);color:#c8bfae;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all 0.2s}
+.btn-notif:hover{border-color:rgba(201,153,30,0.2);color:#e8bb48}
+.notif-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#c8281a;color:#fff;font-size:0.55rem;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px}
+.notif-badge.on{display:flex}
+.btn-logout{background:none;border:1px solid rgba(200,40,26,0.35);color:#e85040;padding:0.35rem 1rem;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-logout:hover{background:rgba(200,40,26,0.12)}
+.admin-wrap{padding:2rem 2.5rem;max-width:1400px;margin:0 auto}
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;margin-bottom:2rem}
+.stat-card{background:linear-gradient(145deg,#16121e,#0e0c18);border:1px solid rgba(255,255,255,0.07);padding:1.25rem 1.5rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.c-gold::before{background:linear-gradient(to right,transparent,#e8bb48,transparent)}
+.c-green::before{background:linear-gradient(to right,transparent,#48bb78,transparent)}
+.c-red::before{background:linear-gradient(to right,transparent,#e85040,transparent)}
+.c-amber::before{background:linear-gradient(to right,transparent,#e8921e,transparent)}
+.c-blue::before{background:linear-gradient(to right,transparent,#6ab4e8,transparent)}
+.stat-label{font-size:0.58rem;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#7a7060;margin-bottom:0.6rem}
+.stat-val{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;line-height:1;color:#f0e8d8}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+.toolbar-left{display:flex;align-items:center;gap:0.75rem}
+.toolbar-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:500;color:#f0e8d8}
+.record-count{font-family:'DM Mono',monospace;font-size:0.65rem;color:#7a7060;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);padding:0.2rem 0.6rem}
+.toolbar-right{display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap}
+.search-box{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:#f0e8d8;padding:0.55rem 1rem;font-family:'DM Mono',monospace;font-size:0.75rem;outline:none;width:220px;transition:border-color 0.2s}
+.search-box:focus{border-color:#c9991e}
+.search-box::placeholder{color:#7a7060}
+.filter-sel{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);color:#f0e8d8;padding:0.55rem 1rem;font-family:'Syne',sans-serif;font-size:0.68rem;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+.filter-sel option{background:#0e0c18}
+.btn-export{background:linear-gradient(135deg,rgba(201,153,30,0.15),rgba(201,153,30,0.05));border:1px solid #6a4e10;color:#e8bb48;padding:0.55rem 1.2rem;font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-export:hover{background:linear-gradient(135deg,rgba(201,153,30,0.25),rgba(201,153,30,0.12))}
+.btn-clear-all{background:rgba(200,40,26,0.1);border:1px solid rgba(200,40,26,0.3);color:#e85040;padding:0.55rem 1rem;font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-clear-all:hover{background:rgba(200,40,26,0.2)}
+.table-wrap{background:linear-gradient(145deg,#131120,#0e0c18);border:1px solid rgba(255,255,255,0.07);overflow-x:auto;box-shadow:0 8px 40px rgba(0,0,0,0.4)}
+table{width:100%;border-collapse:collapse;font-size:0.75rem}
+thead tr{border-bottom:1px solid rgba(201,153,30,0.2);background:rgba(201,153,30,0.04)}
+th{padding:0.9rem 1rem;text-align:left;font-family:'Syne',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#c9991e;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover,th.sorted{color:#e8bb48}
+td{padding:0.85rem 1rem;border-bottom:1px solid rgba(255,255,255,0.07);font-family:'DM Mono',monospace;color:#c8bfae;vertical-align:middle;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background 0.15s;cursor:pointer}
+tbody tr:hover{background:rgba(201,153,30,0.04)}
+tbody tr.expanded{background:rgba(201,153,30,0.05)}
+.token-cell{font-weight:500;color:#e8bb48;font-size:0.72rem;letter-spacing:0.06em}
+.guest-name{font-family:'Syne',sans-serif;font-size:0.76rem;font-weight:600;color:#f0e8d8}
+.amount-cell{font-family:'Playfair Display',serif;font-size:0.9rem;font-weight:700;color:#f0e8d8}
+.status-badge{display:inline-block;padding:0.2rem 0.6rem;font-size:0.58rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase}
+.s-confirmed{background:rgba(42,122,74,0.2);color:#48bb78;border:1px solid rgba(42,122,74,0.4)}
+.s-pending{background:rgba(184,106,16,0.2);color:#e8921e;border:1px solid rgba(184,106,16,0.4)}
+.s-cancelled{background:rgba(200,40,26,0.15);color:#e85040;border:1px solid rgba(200,40,26,0.3)}
+.tier-pill{font-size:0.6rem;font-weight:600;letter-spacing:0.1em;padding:0.15rem 0.5rem;border:1px solid rgba(255,255,255,0.1);color:#c8bfae}
+.tier-vip{border-color:rgba(201,153,30,0.4);color:#e8bb48}
+.tier-priority{border-color:rgba(180,90,50,0.4);color:#d4a878}
+.detail-row{display:none}
+.detail-row.open{display:table-row}
+.detail-row td{background:rgba(26,13,8,0.6);border-bottom:2px solid rgba(201,153,30,0.15);padding:1.25rem 1.5rem;white-space:normal}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+.detail-section h4{font-family:'Syne',sans-serif;font-size:0.58rem;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:#c9991e;margin-bottom:0.75rem;padding-bottom:0.4rem;border-bottom:1px solid rgba(201,153,30,0.15)}
+.detail-pair{display:flex;flex-direction:column;gap:0.15rem;margin-bottom:0.6rem}
+.d-key{font-size:0.58rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#7a7060}
+.d-val{font-family:'DM Mono',monospace;font-size:0.72rem;color:#c8bfae}
+.d-val.hi{color:#f0e8d8;font-weight:500}
+.detail-actions{display:flex;gap:0.5rem;margin-top:1rem;grid-column:span 4;flex-wrap:wrap}
+.btn-sm{padding:0.4rem 0.9rem;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;border:1px solid;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center}
+.btn-confirm{border-color:rgba(42,122,74,0.5);color:#48bb78;background:rgba(42,122,74,0.1)}
+.btn-confirm:hover{background:rgba(42,122,74,0.2)}
+.btn-cancel{border-color:rgba(200,40,26,0.4);color:#e85040;background:rgba(200,40,26,0.08)}
+.btn-cancel:hover{background:rgba(200,40,26,0.18)}
+.btn-remove{border-color:rgba(255,255,255,0.1);color:#7a7060;background:transparent}
+.btn-remove:hover{border-color:rgba(200,40,26,0.4);color:#e85040}
+.btn-track{border-color:rgba(201,153,30,0.4);color:#e8bb48;background:rgba(201,153,30,0.06)}
+.btn-track:hover{background:rgba(201,153,30,0.14)}
+.empty-state{text-align:center;padding:5rem 2rem;border:1px solid rgba(255,255,255,0.07);background:linear-gradient(145deg,#131120,#0e0c18)}
+.empty-icon{font-size:3rem;margin-bottom:1rem;opacity:0.4}
+.empty-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:500;color:#f0e8d8;margin-bottom:0.5rem}
+.empty-sub{font-family:'DM Mono',monospace;font-size:0.72rem;color:#7a7060;line-height:1.7}
+.btn-empty{display:inline-block;margin-top:1.5rem;padding:0.7rem 1.5rem;background:linear-gradient(135deg,#e8bb48,#c9991e);color:#04030a;font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer}
+.modal-overlay{position:fixed;inset:0;background:rgba(4,3,10,0.85);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:linear-gradient(145deg,#1a1630,#0e0c18);border:1px solid rgba(201,153,30,0.2);padding:2rem;max-width:380px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,0.7)}
+.modal-box h3{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:500;color:#f0e8d8;margin-bottom:0.75rem}
+.modal-box p{font-family:'DM Mono',monospace;font-size:0.72rem;color:#7a7060;line-height:1.7;margin-bottom:1.5rem}
+.modal-btns{display:flex;gap:0.75rem;justify-content:flex-end}
+.notif-overlay{position:fixed;inset:0;z-index:499;background:rgba(4,3,10,0.4);display:none}
+.notif-overlay.open{display:block}
+.notif-panel{position:fixed;top:0;right:0;bottom:0;width:380px;z-index:500;background:linear-gradient(180deg,#0e0c18,#08060f);border-left:1px solid rgba(201,153,30,0.2);box-shadow:-8px 0 40px rgba(0,0,0,0.6);transform:translateX(100%);transition:transform 0.3s ease;display:flex;flex-direction:column}
+.notif-panel.open{transform:translateX(0)}
+.notif-head{padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.notif-head-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:500;color:#f0e8d8}
+.notif-head-right{display:flex;gap:0.75rem;align-items:center}
+.btn-mark-all{font-family:'Syne',sans-serif;font-size:0.58rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#c9991e;background:none;border:none;cursor:pointer}
+.btn-mark-all:hover{color:#e8bb48}
+.btn-close-panel{background:none;border:none;color:#7a7060;font-size:1.2rem;cursor:pointer;line-height:1}
+.btn-close-panel:hover{color:#f0e8d8}
+.notif-list{flex:1;overflow-y:auto;padding:0.75rem}
+.notif-item{padding:1rem 1.1rem;border:1px solid rgba(255,255,255,0.07);margin-bottom:0.6rem;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+.notif-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.notif-item.unread{background:rgba(255,255,255,0.02)}
+.notif-item:hover{border-color:rgba(201,153,30,0.2)}
+.type-profile_update::before{background:#c9991e}
+.type-account_delete::before{background:#e85040}
+.notif-type-tag{font-size:0.52rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;padding:0.12rem 0.45rem;border:1px solid;margin-bottom:0.5rem;display:inline-block}
+.type-profile_update .notif-type-tag{color:#c9991e;border-color:rgba(201,153,30,0.35);background:rgba(201,153,30,0.07)}
+.type-account_delete .notif-type-tag{color:#e85040;border-color:rgba(200,40,26,0.35);background:rgba(200,40,26,0.07)}
+.notif-msg{font-family:'Syne',sans-serif;font-size:0.76rem;font-weight:600;color:#f0e8d8;margin-bottom:0.4rem;line-height:1.3}
+.notif-detail{font-family:'DM Mono',monospace;font-size:0.62rem;color:#7a7060;line-height:1.65}
+.notif-time{font-family:'DM Mono',monospace;font-size:0.58rem;color:#3a3428;margin-top:0.5rem}
+.notif-empty{text-align:center;padding:4rem 2rem;font-family:'DM Mono',monospace;font-size:0.72rem;color:#7a7060;line-height:1.8}
+.notif-footer{padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.07);flex-shrink:0}
+.btn-clear-notifs{width:100%;background:rgba(200,40,26,0.08);border:1px solid rgba(200,40,26,0.25);color:#e85040;padding:0.6rem;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.btn-clear-notifs:hover{background:rgba(200,40,26,0.15)}
+.toast{position:fixed;bottom:2rem;right:2rem;background:linear-gradient(135deg,#13112a,#08060f);border:1px solid #e8bb48;padding:0.9rem 1.4rem;font-size:0.72rem;z-index:200;transform:translateY(80px);opacity:0;transition:all 0.3s ease;box-shadow:0 16px 48px rgba(0,0,0,0.6);max-width:280px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-title{color:#e8bb48;font-size:0.62rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:0.25rem}
+.toast-msg{color:#f0e8d8;font-family:'DM Mono',monospace;font-size:0.7rem}
+.gate-overlay{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#0e0c18,#04030a,#080612);display:flex;align-items:center;justify-content:center}
+.gate-overlay.hidden{display:none}
+.gate-card{width:100%;max-width:400px;margin:1rem;background:linear-gradient(150deg,#1e0f0a,#160b07,#120907);border:1px solid rgba(160,80,40,0.35);box-shadow:inset 0 1px 0 rgba(220,130,80,0.12),0 32px 80px rgba(0,0,0,0.7);padding:2.5rem;position:relative}
+.gate-card::before{content:'RESTRICTED ACCESS';position:absolute;top:-0.5rem;left:1.5rem;background:#160b07;padding:0 0.5rem;font-size:0.55rem;font-weight:700;letter-spacing:0.3em;color:#c8281a}
+.gate-logo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#f0e8d8;margin-bottom:0.4rem}
+.gate-logo em{font-style:italic;color:#e8bb48}
+.gate-eyebrow{font-size:0.58rem;font-weight:700;letter-spacing:0.28em;text-transform:uppercase;color:#c8281a;margin-bottom:1.5rem}
+.gate-title{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:500;color:#f0e8d8;margin-bottom:0.4rem}
+.gate-title em{font-style:italic;color:#e8bb48}
+.gate-sub{font-family:'DM Mono',monospace;font-size:0.7rem;color:#7a7060;line-height:1.7;margin-bottom:2rem}
+.gate-field{margin-bottom:1.25rem}
+.gate-field label{display:block;font-size:0.58rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#7a7060;margin-bottom:0.5rem}
+.gate-input{width:100%;background:rgba(10,5,3,0.8);border:1px solid rgba(180,90,50,0.25);color:#f0e8d8;padding:0.8rem 1rem;font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;transition:all 0.2s}
+.gate-input:focus{border-color:rgba(210,130,70,0.65);background:rgba(30,12,6,0.9)}
+.gate-err{font-family:'DM Mono',monospace;font-size:0.65rem;color:#e85040;margin-top:0.4rem;display:none}
+.gate-err.show{display:block}
+.gate-attempts{font-family:'DM Mono',monospace;font-size:0.62rem;color:#7a7060;margin-bottom:1rem;min-height:1rem}
+.gate-btn{width:100%;background:linear-gradient(135deg,#e8bb48,#c9991e);color:#04030a;border:none;padding:0.9rem;font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:800;letter-spacing:0.22em;text-transform:uppercase;cursor:pointer;transition:all 0.2s}
+.gate-btn:hover{box-shadow:0 6px 24px rgba(201,153,30,0.3);transform:translateY(-1px)}
+.gate-back{display:block;text-align:center;margin-top:1rem;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:#4a4438;text-decoration:none}
+.gate-back:hover{color:#7a7060}
+.gate-locked-box{text-align:center;padding:1rem 0}
+.gate-locked-msg{font-family:'DM Mono',monospace;font-size:0.72rem;color:#e85040;line-height:1.7}
+.gate-locked-timer{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:#e8bb48;margin:0.75rem 0}
+@media(max-width:900px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .detail-grid{grid-template-columns:repeat(2,1fr)}
+  .detail-actions{grid-column:span 2}
+  .admin-wrap{padding:1rem}
+  header,.kpv-nav{padding:1rem 1.25rem}
+}
 </style>
 </head>
 <body>
 
+<nav class="kpv-nav">
+  <a class="kpv-nav-logo" href="keys-please-valet.html">Keys <em>Please</em> Valet</a>
+  <div class="kpv-nav-links">
+    <a class="kpv-nav-link" href="keys-please-valet.html">Book</a>
+    <a class="kpv-nav-link" href="kpv-portal.html">Customer Portal</a>
+    <a class="kpv-nav-link" href="kpv-track.html">GPS Tracker</a>
+    <a class="kpv-nav-link active" href="kpv-admin.html">Admin</a>
+    <a class="kpv-nav-book" href="keys-please-valet.html">+ New Booking</a>
+  </div>
+</nav>
+
 <header>
-  <div class="logo">Keys <em>Please</em> Valet — <span style="font-size:0.9rem;font-style:normal;color:var(--muted);">Admin</span></div>
+  <div class="logo">Keys <em>Please</em> Valet &mdash; <span style="font-size:0.9rem;color:#7a7060">Admin</span></div>
   <div class="header-right">
     <div class="live-dot"></div>
-    <div class="header-time" id="headerTime"></div>
+    <div class="header-time" id="hTime"></div>
+    <div class="admin-user-label" id="hUser"></div>
+    <button class="btn-notif" onclick="openNotif()" title="Notifications">
+      &#x1F514;
+      <span class="notif-badge" id="nBadge">0</span>
+    </button>
     <div class="admin-badge">Database</div>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
   </div>
 </header>
 
 <div class="admin-wrap">
-
-  <!-- Stats -->
-  <div class="stats-row" id="statsRow">
-    <div class="stat-card gold">
-      <div class="stat-label">Total Bookings</div>
-      <div class="stat-val gold" id="statTotal">0</div>
-    </div>
-    <div class="stat-card green">
-      <div class="stat-label">Confirmed</div>
-      <div class="stat-val green" id="statConfirmed">0</div>
-    </div>
-    <div class="stat-card red">
-      <div class="stat-label">Cancelled</div>
-      <div class="stat-val red" id="statCancelled">0</div>
-    </div>
-    <div class="stat-card amber">
-      <div class="stat-label">Revenue</div>
-      <div class="stat-val" id="statRevenue" style="color:var(--amber-hi);">$0</div>
-    </div>
-    <div class="stat-card blue">
-      <div class="stat-label">Today</div>
-      <div class="stat-val" id="statToday" style="color:#6ab4e8;">0</div>
-    </div>
+  <div class="stats-row">
+    <div class="stat-card c-gold"><div class="stat-label">Total Bookings</div><div class="stat-val" id="sTot">0</div></div>
+    <div class="stat-card c-green"><div class="stat-label">Confirmed</div><div class="stat-val" id="sCon" style="color:#48bb78">0</div></div>
+    <div class="stat-card c-red"><div class="stat-label">Cancelled</div><div class="stat-val" id="sCan" style="color:#e85040">0</div></div>
+    <div class="stat-card c-amber"><div class="stat-label">Revenue</div><div class="stat-val" id="sRev" style="color:#e8921e">$0</div></div>
+    <div class="stat-card c-blue"><div class="stat-label">Today</div><div class="stat-val" id="sTod" style="color:#6ab4e8">0</div></div>
   </div>
 
-  <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
       <div class="toolbar-title">Booking Records</div>
-      <div class="record-count" id="recordCount">0 records</div>
+      <div class="record-count" id="rCount">0 records</div>
     </div>
     <div class="toolbar-right">
-      <input class="search-box" id="searchBox" type="text" placeholder="Search name, plate, token…" oninput="renderTable()">
-      <select class="filter-select" id="filterStatus" onchange="renderTable()">
+      <input class="search-box" id="sBox" type="text" placeholder="Search name, plate, token..." oninput="draw()">
+      <select class="filter-sel" id="fStatus" onchange="draw()">
         <option value="">All Status</option>
         <option value="confirmed">Confirmed</option>
         <option value="pending">Pending</option>
         <option value="cancelled">Cancelled</option>
       </select>
-      <select class="filter-select" id="filterTier" onchange="renderTable()">
+      <select class="filter-sel" id="fTier" onchange="draw()">
         <option value="">All Tiers</option>
         <option value="Standard">Standard</option>
         <option value="Priority">Priority</option>
         <option value="VIP">VIP</option>
       </select>
-      <button class="btn-export" onclick="exportCSV()">↓ Export CSV</button>
-      <button class="btn-clear" onclick="openClearModal()">Clear All</button>
+      <button class="btn-export" onclick="doExport()">&#8595; Export CSV</button>
+      <button class="btn-clear-all" onclick="openClear()">Clear All</button>
     </div>
   </div>
 
-  <!-- Table -->
-  <div id="tableContainer"></div>
-
+  <div id="tWrap"></div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast">
-  <div class="toast-title" id="toastTitle"></div>
-  <div class="toast-msg"  id="toastMsg"></div>
-</div>
-
-<!-- Clear modal -->
-<div class="modal-overlay" id="clearModal">
-  <div class="modal">
+<div class="modal-overlay" id="mClear">
+  <div class="modal-box">
     <h3>Clear all records?</h3>
-    <p>This will permanently delete all booking records from the database. This action cannot be undone.</p>
-    <div class="modal-actions">
-      <button class="btn-sm delete" onclick="closeClearModal()">Cancel</button>
-      <button class="btn-sm cancel" onclick="confirmClear()">Delete All</button>
+    <p>This permanently deletes all booking records and cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn-sm btn-remove" onclick="closeClear()">Cancel</button>
+      <button class="btn-sm btn-cancel" onclick="doClear()">Delete All</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-title" id="tTitle"></div>
+  <div class="toast-msg" id="tMsg"></div>
+</div>
+
+<div class="notif-overlay" id="nOverlay" onclick="closeNotif()"></div>
+<div class="notif-panel" id="nPanel">
+  <div class="notif-head">
+    <div class="notif-head-title">Notifications</div>
+    <div class="notif-head-right">
+      <button class="btn-mark-all" onclick="markAllRead()">Mark all read</button>
+      <button class="btn-close-panel" onclick="closeNotif()">&#10005;</button>
+    </div>
+  </div>
+  <div class="notif-list" id="nList"></div>
+  <div class="notif-footer">
+    <button class="btn-clear-notifs" onclick="clearNotifs()">Clear All Notifications</button>
+  </div>
+</div>
+
+<div class="gate-overlay" id="gOverlay">
+  <div class="gate-card">
+    <div class="gate-logo">Keys <em>Please</em> Valet</div>
+    <div class="gate-eyebrow">Staff Access Only</div>
+    <div id="gForm">
+      <div class="gate-title">Admin <em>Portal</em></div>
+      <p class="gate-sub">Restricted to authorised staff. Customer accounts cannot access this page.</p>
+      <div class="gate-field">
+        <label>Staff ID</label>
+        <input class="gate-input" id="gUser" type="text" placeholder="staff@keyspleasevalet.com">
+      </div>
+      <div class="gate-field">
+        <label>Admin Passcode</label>
+        <input class="gate-input" id="gPass" type="password" placeholder="Enter passcode" onkeydown="if(event.key==='Enter')doGateLogin()">
+        <div class="gate-err" id="gErr">Incorrect credentials. Please try again.</div>
+      </div>
+      <div class="gate-attempts" id="gAttempts"></div>
+      <button class="gate-btn" onclick="doGateLogin()">Authenticate</button>
+      <a class="gate-back" href="keys-please-valet.html">Return to booking site</a>
+    </div>
+    <div id="gLocked" style="display:none">
+      <div class="gate-locked-box">
+        <div style="font-size:2.5rem;margin-bottom:0.75rem">&#128274;</div>
+        <div class="gate-locked-msg">Too many failed attempts. Locked for:</div>
+        <div class="gate-locked-timer" id="gTimer">5:00</div>
+        <div class="gate-locked-msg" style="font-size:0.6rem;margin-top:0.5rem">Contact your administrator.</div>
+        <a class="gate-back" href="keys-please-valet.html" style="margin-top:1.5rem">Return to booking site</a>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-  const DB_KEY = 'kpv_bookings';
+var BK = 'kpv_bookings';
+var GK = 'kpv_admin_auth';
+var LK = 'kpv_admin_lock';
+var NK = 'kpv_admin_notifications';
+var MAX_A = 5;
+var LOCK_MS = 300000;
+var CREDS = [
+  {id:'admin@keyspleasevalet.com', pw:'KPV-Admin2025!'},
+  {id:'staff@keyspleasevalet.com', pw:'KPVstaff#1'}
+];
+var sCol = 'createdAt', sDir = -1, expId = null, lockTmr = null;
 
-  // ── DB helpers ──────────────────────────────────────────────────────────────
-  function dbLoad() {
-    try { return JSON.parse(localStorage.getItem(DB_KEY) || '[]'); }
-    catch(e) { return []; }
+function bkLoad(){ try{return JSON.parse(localStorage.getItem(BK)||'[]')}catch(e){return[]} }
+function bkSave(d){ localStorage.setItem(BK,JSON.stringify(d)) }
+function gLoad(){ try{return JSON.parse(sessionStorage.getItem(GK))}catch(e){return null} }
+function gSave(v){ sessionStorage.setItem(GK,JSON.stringify(v)) }
+function lkGet(){ try{return JSON.parse(localStorage.getItem(LK))}catch(e){return null} }
+function lkSet(v){ localStorage.setItem(LK,JSON.stringify(v)) }
+function lkClr(){ localStorage.removeItem(LK) }
+function nfLoad(){ try{return JSON.parse(localStorage.getItem(NK)||'[]')}catch(e){return[]} }
+function nfSave(v){ localStorage.setItem(NK,JSON.stringify(v)) }
+
+function tick(){
+  var el=document.getElementById('hTime');
+  if(el) el.textContent=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function stats(all){
+  var today=new Date().toISOString().slice(0,10);
+  var co=0,ca=0,re=0,to=0;
+  for(var i=0;i<all.length;i++){
+    var r=all[i];
+    if(r.status==='confirmed') co++;
+    if(r.status==='cancelled') ca++;
+    if(r.status!=='cancelled') re+=(r.total||0);
+    if((r.createdAt||'').slice(0,10)===today) to++;
   }
-  function dbSave(records) { localStorage.setItem(DB_KEY, JSON.stringify(records)); }
+  document.getElementById('sTot').textContent=all.length;
+  document.getElementById('sCon').textContent=co;
+  document.getElementById('sCan').textContent=ca;
+  document.getElementById('sRev').textContent='$'+re.toLocaleString();
+  document.getElementById('sTod').textContent=to;
+}
 
-  // ── Clock ───────────────────────────────────────────────────────────────────
-  function updateClock() {
-    document.getElementById('headerTime').textContent =
-      new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function filtered(){
+  var q=document.getElementById('sBox').value.toLowerCase();
+  var fs=document.getElementById('fStatus').value;
+  var ft=document.getElementById('fTier').value;
+  var data=bkLoad();
+  if(q) data=data.filter(function(r){
+    var s=[r.id,r.guest&&r.guest.firstName,r.guest&&r.guest.lastName,r.guest&&r.guest.email,r.guest&&r.guest.phone,r.vehicle&&r.vehicle.plate,r.venue].join(' ').toLowerCase();
+    return s.indexOf(q)!==-1;
+  });
+  if(fs) data=data.filter(function(r){return r.status===fs;});
+  if(ft) data=data.filter(function(r){return (r.tier||'').indexOf(ft)===0;});
+  data.sort(function(a,b){
+    var av=a[sCol]||'', bv=b[sCol]||'';
+    if(sCol==='total'){av=+av;bv=+bv;}
+    return av<bv?sDir:av>bv?-sDir:0;
+  });
+  return data;
+}
+
+function sortBy(col){
+  if(sCol===col){sDir*=-1;}else{sCol=col;sDir=-1;}
+  draw();
+}
+
+function expand(id){
+  expId=(expId===id)?null:id;
+  draw();
+}
+
+function th(col,lbl){
+  var arrow=sCol===col?(sDir===1?'&#8593;':'&#8595;'):'&#8597;';
+  var cls=sCol===col?'sorted':'';
+  return '<th class="'+cls+'" onclick="sortBy(\''+col+'\')">'+lbl+' <span style="opacity:0.5">'+arrow+'</span></th>';
+}
+
+function val(v){ return v||'&mdash;'; }
+
+function draw(){
+  var all=bkLoad(), data=filtered(), wrap=document.getElementById('tWrap');
+  stats(all);
+  var n=data.length;
+  document.getElementById('rCount').textContent=n+' record'+(n!==1?'s':'');
+  if(!n){
+    var et=all.length===0?'No bookings yet':'No results found';
+    var es=all.length===0?'Submit a booking on the main site &mdash; it will appear here instantly.':'Try adjusting your search or filters.';
+    var el=all.length===0?'<a class="btn-empty" href="keys-please-valet.html">Open Booking Site</a>':'';
+    wrap.innerHTML='<div class="empty-state"><div class="empty-icon">&#128451;</div><div class="empty-title">'+et+'</div><div class="empty-sub">'+es+'</div>'+el+'</div>';
+    return;
   }
-  setInterval(updateClock, 1000);
-  updateClock();
-
-  // ── Stats ───────────────────────────────────────────────────────────────────
-  function updateStats(records) {
-    const today = new Date().toISOString().slice(0, 10);
-    const confirmed  = records.filter(r => r.status === 'confirmed').length;
-    const cancelled  = records.filter(r => r.status === 'cancelled').length;
-    const revenue    = records.filter(r => r.status !== 'cancelled').reduce((s, r) => s + (r.total || 0), 0);
-    const todayCount = records.filter(r => (r.createdAt || '').startsWith(today)).length;
-
-    document.getElementById('statTotal').textContent     = records.length;
-    document.getElementById('statConfirmed').textContent = confirmed;
-    document.getElementById('statCancelled').textContent = cancelled;
-    document.getElementById('statRevenue').textContent   = '$' + revenue.toLocaleString();
-    document.getElementById('statToday').textContent     = todayCount;
-  }
-
-  // ── Filter + search ──────────────────────────────────────────────────────────
-  let sortCol = 'createdAt', sortDir = -1;
-
-  function getFiltered() {
-    const q      = document.getElementById('searchBox').value.toLowerCase();
-    const status = document.getElementById('filterStatus').value;
-    const tier   = document.getElementById('filterTier').value;
-    let records  = dbLoad();
-
-    if (q) records = records.filter(r => {
-      const s = [r.id, r.guest?.firstName, r.guest?.lastName,
-                 r.guest?.email, r.guest?.phone,
-                 r.vehicle?.plate, r.venue].join(' ').toLowerCase();
-      return s.includes(q);
-    });
-
-    if (status) records = records.filter(r => r.status === status);
-    if (tier)   records = records.filter(r => (r.tier || '').startsWith(tier));
-
-    records.sort((a, b) => {
-      let av = a[sortCol] ?? '', bv = b[sortCol] ?? '';
-      if (sortCol === 'total') { av = +av; bv = +bv; }
-      return av < bv ? sortDir : av > bv ? -sortDir : 0;
-    });
-
-    return records;
-  }
-
-  // ── Render ───────────────────────────────────────────────────────────────────
-  let expandedId = null;
-
-  function renderTable() {
-    const all      = dbLoad();
-    const records  = getFiltered();
-    const container = document.getElementById('tableContainer');
-
-    updateStats(all);
-    document.getElementById('recordCount').textContent = records.length + ' record' + (records.length !== 1 ? 's' : '');
-
-    if (records.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🗃️</div>
-          <div class="empty-title">${all.length === 0 ? 'No bookings yet' : 'No results found'}</div>
-          <div class="empty-sub">${all.length === 0
-            ? 'Submit a booking on the main site —\nbookings will appear here instantly.'
-            : 'Try adjusting your search or filters.'}</div>
-          ${all.length === 0 ? '<a class="empty-link" href="index.html">Open Booking Site →</a>' : ''}
-        </div>`;
-      return;
+  var thead='<tr>'+th('id','Token')+th('guest','Guest')+th('venue','Venue')+th('tier','Tier')+'<th>Vehicle</th><th>Plate</th>'+th('schedule','Date')+th('total','Total')+th('status','Status')+th('createdAt','Booked At')+'</tr>';
+  var rows='';
+  for(var i=0;i<data.length;i++){
+    var r=data[i];
+    var g=r.guest||{}, v=r.vehicle||{}, sp=r.schedule||{};
+    var nm=val([g.firstName,g.lastName].filter(Boolean).join(' '));
+    var vh=val([v.year,v.color,v.make,v.model].filter(Boolean).join(' '));
+    var cr=r.createdAt?new Date(r.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'&mdash;';
+    var tc=(r.tier||'').indexOf('VIP')===0?'tier-vip':(r.tier||'').indexOf('Priority')===0?'tier-priority':'';
+    var sc='s-'+(r.status||'confirmed');
+    var ex=expId===r.id;
+    rows+='<tr onclick="expand(\''+r.id+'\')" class="'+(ex?'expanded':'')+'"><td class="token-cell">'+val(r.id)+'</td><td><span class="guest-name">'+nm+'</span></td><td>'+val(r.venue)+'</td><td><span class="tier-pill '+tc+'">'+val(r.tier)+'</span></td><td>'+vh+'</td><td>'+val(v.plate)+'</td><td>'+val(sp.date)+'</td><td class="amount-cell">$'+val(r.total)+'</td><td><span class="status-badge '+sc+'">'+(r.status||'confirmed')+'</span></td><td style="color:#7a7060;font-size:0.65rem">'+cr+'</td></tr>';
+    if(ex){
+      rows+='<tr class="detail-row open"><td colspan="10"><div class="detail-grid">';
+      rows+='<div class="detail-section"><h4>Guest</h4><div class="detail-pair"><span class="d-key">Name</span><span class="d-val hi">'+nm+'</span></div><div class="detail-pair"><span class="d-key">Email</span><span class="d-val">'+val(g.email)+'</span></div><div class="detail-pair"><span class="d-key">Phone</span><span class="d-val">'+val(g.phone)+'</span></div><div class="detail-pair"><span class="d-key">Payment</span><span class="d-val">'+val(r.payment)+'</span></div></div>';
+      rows+='<div class="detail-section"><h4>Schedule</h4><div class="detail-pair"><span class="d-key">Date</span><span class="d-val hi">'+val(sp.date)+'</span></div><div class="detail-pair"><span class="d-key">Arrival</span><span class="d-val">'+val(sp.arrival)+'</span></div><div class="detail-pair"><span class="d-key">Departure</span><span class="d-val">'+val(sp.departure)+'</span></div><div class="detail-pair"><span class="d-key">Event</span><span class="d-val">'+val(sp.eventType)+'</span></div>'+(sp.special?'<div class="detail-pair"><span class="d-key">Notes</span><span class="d-val">'+sp.special+'</span></div>':'')+'</div>';
+      rows+='<div class="detail-section"><h4>Vehicle</h4><div class="detail-pair"><span class="d-key">Vehicle</span><span class="d-val hi">'+vh+'</span></div><div class="detail-pair"><span class="d-key">Plate</span><span class="d-val">'+val(v.plate)+'</span></div><div class="detail-pair"><span class="d-key">Type</span><span class="d-val">'+val(v.type)+'</span></div>'+(v.notes?'<div class="detail-pair"><span class="d-key">Notes</span><span class="d-val">'+v.notes+'</span></div>':'')+'</div>';
+      rows+='<div class="detail-section"><h4>Booking</h4><div class="detail-pair"><span class="d-key">Token</span><span class="d-val hi" style="color:#e8bb48">'+val(r.id)+'</span></div><div class="detail-pair"><span class="d-key">Venue</span><span class="d-val">'+val(r.venue)+'</span></div><div class="detail-pair"><span class="d-key">Tier</span><span class="d-val">'+val(r.tier)+'</span></div><div class="detail-pair"><span class="d-key">Total</span><span class="d-val hi">$'+val(r.total)+'</span></div></div>';
+      rows+='<div class="detail-actions"><button class="btn-sm btn-confirm" onclick="chgStatus(event,\''+r.id+'\',\'confirmed\')">Confirm</button><button class="btn-sm btn-cancel" onclick="chgStatus(event,\''+r.id+'\',\'cancelled\')">Cancel</button><button class="btn-sm btn-remove" onclick="delRec(event,\''+r.id+'\')">Delete</button><a href="kpv-track.html?token='+r.id+'" target="_blank" class="btn-sm btn-track">Track Live</a></div>';
+      rows+='</div></td></tr>';
     }
-
-    const thSort = (col, label) => {
-      const arrow = sortCol === col ? (sortDir === 1 ? '↑' : '↓') : '↕';
-      const cls   = sortCol === col ? 'sorted' : '';
-      return `<th class="${cls}" onclick="setSort('${col}')">${label} <span class="sort-arrow">${arrow}</span></th>`;
-    };
-
-    let rows = '';
-    records.forEach((r, i) => {
-      const name     = [r.guest?.firstName, r.guest?.lastName].filter(Boolean).join(' ') || '—';
-      const vehicle  = [r.vehicle?.year, r.vehicle?.color, r.vehicle?.make, r.vehicle?.model].filter(Boolean).join(' ') || '—';
-      const date     = r.schedule?.date || '—';
-      const created  = r.createdAt ? new Date(r.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '—';
-      const tierCls  = r.tier?.startsWith('VIP') ? 'tier-vip' : r.tier?.startsWith('Priority') ? 'tier-priority' : '';
-      const statusCls = 'status-' + (r.status || 'confirmed');
-      const isExp    = expandedId === r.id;
-
-      rows += `
-        <tr onclick="toggleExpand('${r.id}')" class="${isExp ? 'expanded' : ''}">
-          <td class="token-cell">${r.id}</td>
-          <td><span class="guest-name">${name}</span></td>
-          <td style="color:var(--parchment)">${r.venue || '—'}</td>
-          <td><span class="tier-pill ${tierCls}">${r.tier || '—'}</span></td>
-          <td style="color:var(--parchment)">${vehicle}</td>
-          <td style="color:var(--parchment)">${r.vehicle?.plate || '—'}</td>
-          <td style="color:var(--parchment)">${date}</td>
-          <td class="amount-cell">$${r.total ?? '—'}</td>
-          <td><span class="status-badge ${statusCls}">${r.status || 'confirmed'}</span></td>
-          <td style="color:var(--muted);font-size:0.65rem">${created}</td>
-        </tr>
-        <tr class="detail-row ${isExp ? 'open' : ''}" id="detail-${r.id}">
-          <td colspan="10">
-            <div class="detail-grid">
-              <div class="detail-section">
-                <h4>Guest</h4>
-                <div class="detail-row-item"><span class="detail-key">Full Name</span><span class="detail-val hi">${name}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Email</span><span class="detail-val">${r.guest?.email || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Phone</span><span class="detail-val">${r.guest?.phone || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Payment</span><span class="detail-val">${r.payment || '—'}</span></div>
-              </div>
-              <div class="detail-section">
-                <h4>Schedule</h4>
-                <div class="detail-row-item"><span class="detail-key">Date</span><span class="detail-val hi">${r.schedule?.date || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Arrival</span><span class="detail-val">${r.schedule?.arrival || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Departure</span><span class="detail-val">${r.schedule?.departure || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Event Type</span><span class="detail-val">${r.schedule?.eventType || '—'}</span></div>
-                ${r.schedule?.special ? `<div class="detail-row-item"><span class="detail-key">Notes</span><span class="detail-val">${r.schedule.special}</span></div>` : ''}
-              </div>
-              <div class="detail-section">
-                <h4>Vehicle</h4>
-                <div class="detail-row-item"><span class="detail-key">Vehicle</span><span class="detail-val hi">${vehicle}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Plate</span><span class="detail-val">${r.vehicle?.plate || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Type</span><span class="detail-val">${r.vehicle?.type || '—'}</span></div>
-                ${r.vehicle?.notes ? `<div class="detail-row-item"><span class="detail-key">Notes</span><span class="detail-val">${r.vehicle.notes}</span></div>` : ''}
-              </div>
-              <div class="detail-section">
-                <h4>Booking</h4>
-                <div class="detail-row-item"><span class="detail-key">Token</span><span class="detail-val hi" style="color:var(--gold-hi)">${r.id}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Venue</span><span class="detail-val">${r.venue || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Tier</span><span class="detail-val">${r.tier || '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Total</span><span class="detail-val hi">$${r.total ?? '—'}</span></div>
-                <div class="detail-row-item"><span class="detail-key">Booked At</span><span class="detail-val">${r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}</span></div>
-              </div>
-              <div class="detail-actions">
-                <button class="btn-sm confirm" onclick="changeStatus(event,'${r.id}','confirmed')">✓ Confirm</button>
-                <button class="btn-sm cancel"  onclick="changeStatus(event,'${r.id}','cancelled')">✗ Cancel</button>
-                <button class="btn-sm delete"  onclick="deleteRecord(event,'${r.id}')">🗑 Delete</button>
-              </div>
-            </div>
-          </td>
-        </tr>`;
-    });
-
-    container.innerHTML = `
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            ${thSort('id','Token')}
-            ${thSort('guest','Guest')}
-            ${thSort('venue','Venue')}
-            ${thSort('tier','Tier')}
-            <th>Vehicle</th>
-            <th>Plate</th>
-            ${thSort('schedule','Date')}
-            ${thSort('total','Total')}
-            ${thSort('status','Status')}
-            ${thSort('createdAt','Booked At')}
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
   }
+  wrap.innerHTML='<div class="table-wrap"><table><thead>'+thead+'</thead><tbody>'+rows+'</tbody></table></div>';
+}
 
-  function setSort(col) {
-    if (sortCol === col) sortDir *= -1;
-    else { sortCol = col; sortDir = -1; }
-    renderTable();
+function chgStatus(e,id,st){
+  e.stopPropagation();
+  var d=bkLoad();
+  for(var i=0;i<d.length;i++){if(d[i].id===id){d[i].status=st;break;}}
+  bkSave(d); draw();
+  toast('Updated','Booking '+id+' set to '+st);
+}
+
+function delRec(e,id){
+  e.stopPropagation();
+  if(expId===id) expId=null;
+  bkSave(bkLoad().filter(function(r){return r.id!==id;}));
+  draw(); toast('Deleted','Booking '+id+' removed');
+}
+
+function openClear(){ document.getElementById('mClear').classList.add('open'); }
+function closeClear(){ document.getElementById('mClear').classList.remove('open'); }
+function doClear(){
+  bkSave([]); expId=null; closeClear(); draw();
+  toast('Cleared','All booking records deleted');
+}
+
+function doExport(){
+  var data=filtered();
+  if(!data.length){toast('No data','Nothing to export');return;}
+  var hdr=['Token','First Name','Last Name','Email','Phone','Venue','Tier','Total','Status','Date','Arrival','Departure','Event','Vehicle','Plate','Payment','Booked At'];
+  var rows=data.map(function(r){
+    var g=r.guest||{},v=r.vehicle||{},s=r.schedule||{};
+    return [r.id,g.firstName,g.lastName,g.email,g.phone,r.venue,r.tier,r.total,r.status,s.date,s.arrival,s.departure,s.eventType,[v.year,v.make,v.model].filter(Boolean).join(' '),v.plate,r.payment,r.createdAt].map(function(x){return'"'+String(x||'').replace(/"/g,'""')+'"';});
+  });
+  var csv=[hdr.map(function(h){return'"'+h+'"';})].concat(rows).map(function(r){return r.join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='kpv-bookings-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('Exported',data.length+' records downloaded');
+}
+
+function toast(title,msg){
+  document.getElementById('tTitle').textContent=title;
+  document.getElementById('tMsg').textContent=msg;
+  var t=document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3500);
+}
+
+function badge(){
+  var u=nfLoad().filter(function(n){return !n.read;}).length;
+  var b=document.getElementById('nBadge');
+  b.textContent=u>9?'9+':String(u);
+  if(u>0){b.classList.add('on');}else{b.classList.remove('on');}
+}
+
+function openNotif(){ drawNotif(); document.getElementById('nPanel').classList.add('open'); document.getElementById('nOverlay').classList.add('open'); }
+function closeNotif(){ document.getElementById('nPanel').classList.remove('open'); document.getElementById('nOverlay').classList.remove('open'); badge(); }
+
+function drawNotif(){
+  var nf=nfLoad(), c=document.getElementById('nList');
+  if(!nf.length){c.innerHTML='<div class="notif-empty">No notifications yet.<br>Account changes will appear here.</div>';return;}
+  var h='';
+  for(var i=0;i<nf.length;i++){
+    var n=nf[i], d=n.detail||{}, lines=[];
+    if(n.type==='profile_update'){
+      if(d.email) lines.push('Email: '+d.email);
+      if(d.changes) lines.push('Changed: '+d.changes);
+      if(d.updatedAt) lines.push('At: '+new Date(d.updatedAt).toLocaleString());
+    } else {
+      if(d.email) lines.push('Email: '+d.email);
+      if(d.phone) lines.push('Phone: '+d.phone);
+      if(d.memberSince) lines.push('Since: '+new Date(d.memberSince).toLocaleDateString('en-US',{month:'short',year:'numeric'}));
+      if(d.deletedAt) lines.push('Deleted: '+new Date(d.deletedAt).toLocaleString());
+    }
+    var lbl=n.type==='profile_update'?'Profile Update':'Account Deleted';
+    var ts=n.createdAt?new Date(n.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    h+='<div class="notif-item type-'+n.type+(n.read?'':' unread')+'" onclick="markRead(\''+n.id+'\',this)">';
+    h+='<div class="notif-type-tag">'+lbl+'</div>';
+    h+='<div class="notif-msg">'+(n.message||'')+'</div>';
+    h+='<div class="notif-detail">'+lines.join('<br>')+'</div>';
+    h+='<div class="notif-time">'+ts+'</div></div>';
   }
+  c.innerHTML=h;
+}
 
-  function toggleExpand(id) {
-    expandedId = expandedId === id ? null : id;
-    renderTable();
+function markRead(id,el){
+  var nf=nfLoad();
+  for(var i=0;i<nf.length;i++){if(nf[i].id===id){nf[i].read=true;break;}}
+  nfSave(nf); el.classList.remove('unread'); badge();
+}
+
+function markAllRead(){
+  var nf=nfLoad();
+  for(var i=0;i<nf.length;i++) nf[i].read=true;
+  nfSave(nf); drawNotif(); badge();
+}
+
+function clearNotifs(){ nfSave([]); drawNotif(); badge(); }
+
+function doLogout(){
+  sessionStorage.removeItem(GK);
+  document.getElementById('gOverlay').classList.remove('hidden');
+  document.getElementById('gUser').value='';
+  document.getElementById('gPass').value='';
+  document.getElementById('gErr').classList.remove('show');
+  document.getElementById('gAttempts').textContent='';
+  document.getElementById('gForm').style.display='block';
+  document.getElementById('gLocked').style.display='none';
+  document.getElementById('hUser').textContent='';
+}
+
+function doGateLogin(){
+  var user=document.getElementById('gUser').value.trim().toLowerCase();
+  var pw=document.getElementById('gPass').value;
+  document.getElementById('gErr').classList.remove('show');
+  var lk=lkGet();
+  if(lk && Date.now()<lk.until){startLock(lk.until);return;}
+  if(lk) lkClr();
+  var ok=false;
+  for(var i=0;i<CREDS.length;i++){
+    if(CREDS[i].id===user && CREDS[i].pw===pw){ok=true;break;}
   }
-
-  // ── Status / delete ──────────────────────────────────────────────────────────
-  function changeStatus(e, id, status) {
-    e.stopPropagation();
-    const records = dbLoad().map(r => r.id === id ? { ...r, status } : r);
-    dbSave(records);
-    renderTable();
-    showToast('Updated', 'Booking ' + id + ' → ' + status);
+  if(!ok){
+    var ld=lkGet()||{attempts:0,until:0};
+    ld.attempts=(ld.attempts||0)+1;
+    var left=MAX_A-ld.attempts;
+    if(ld.attempts>=MAX_A){
+      ld.until=Date.now()+LOCK_MS;
+      lkSet(ld); startLock(ld.until); return;
+    }
+    lkSet(ld);
+    document.getElementById('gErr').classList.add('show');
+    document.getElementById('gAttempts').textContent=left+' attempt'+(left!==1?'s':'')+' remaining before lockout.';
+    document.getElementById('gPass').value='';
+    document.getElementById('gPass').focus();
+    return;
   }
+  lkClr();
+  gSave({authenticated:true,user:user,at:Date.now()});
+  document.getElementById('gOverlay').classList.add('hidden');
+  document.getElementById('hUser').textContent=user;
+  draw(); badge();
+}
 
-  function deleteRecord(e, id) {
-    e.stopPropagation();
-    if (expandedId === id) expandedId = null;
-    dbSave(dbLoad().filter(r => r.id !== id));
-    renderTable();
-    showToast('Deleted', 'Booking ' + id + ' removed');
+function startLock(until){
+  document.getElementById('gForm').style.display='none';
+  document.getElementById('gLocked').style.display='block';
+  if(lockTmr) clearInterval(lockTmr);
+  lockTmr=setInterval(function(){
+    var left=Math.max(0,until-Date.now());
+    var m=Math.floor(left/60000);
+    var s=Math.floor((left%60000)/1000);
+    document.getElementById('gTimer').textContent=m+':'+(s<10?'0':'')+s;
+    if(left<=0){
+      clearInterval(lockTmr); lkClr();
+      document.getElementById('gForm').style.display='block';
+      document.getElementById('gLocked').style.display='none';
+      document.getElementById('gAttempts').textContent='';
+    }
+  },1000);
+}
+
+setInterval(tick,1000); tick();
+setInterval(draw,5000);
+setInterval(badge,4000);
+
+(function init(){
+  var s=gLoad();
+  if(s && s.authenticated){
+    document.getElementById('gOverlay').classList.add('hidden');
+    document.getElementById('hUser').textContent=s.user||'';
+    draw(); badge();
+  } else {
+    var lk=lkGet();
+    if(lk && Date.now()<lk.until) startLock(lk.until);
   }
-
-  // ── Clear all ────────────────────────────────────────────────────────────────
-  function openClearModal()  { document.getElementById('clearModal').classList.add('open'); }
-  function closeClearModal() { document.getElementById('clearModal').classList.remove('open'); }
-  function confirmClear() {
-    dbSave([]);
-    expandedId = null;
-    closeClearModal();
-    renderTable();
-    showToast('Cleared', 'All booking records deleted');
-  }
-
-  // ── Export CSV ───────────────────────────────────────────────────────────────
-  function exportCSV() {
-    const records = getFiltered();
-    if (!records.length) { showToast('No data', 'Nothing to export'); return; }
-    const headers = ['Token','First Name','Last Name','Email','Phone','Venue','Tier','Total',
-                     'Status','Date','Arrival','Departure','Event','Vehicle','Plate','Payment','Booked At'];
-    const rows = records.map(r => [
-      r.id, r.guest?.firstName, r.guest?.lastName, r.guest?.email, r.guest?.phone,
-      r.venue, r.tier, r.total, r.status,
-      r.schedule?.date, r.schedule?.arrival, r.schedule?.departure, r.schedule?.eventType,
-      [r.vehicle?.year, r.vehicle?.make, r.vehicle?.model].filter(Boolean).join(' '),
-      r.vehicle?.plate, r.payment, r.createdAt
-    ].map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"'));
-
-    const csv  = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'kpv-bookings-' + new Date().toISOString().slice(0,10) + '.csv';
-    a.click();
-    showToast('Exported', records.length + ' records downloaded as CSV');
-  }
-
-  // ── Toast ───────────────────────────────────────────────────────────────────
-  function showToast(title, msg) {
-    document.getElementById('toastTitle').textContent = title;
-    document.getElementById('toastMsg').textContent   = msg;
-    const t = document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-  }
-
-  // ── Live refresh (polls every 5s in case booking site is open in another tab) ──
-  setInterval(renderTable, 5000);
-
-  // ── Init ────────────────────────────────────────────────────────────────────
-  renderTable();
+})();
 </script>
 </body>
 </html>
