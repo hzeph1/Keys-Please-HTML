@@ -179,13 +179,13 @@ tbody tr.expanded{background:rgba(201,153,30,0.05)}
 <body>
 
 <nav class="kpv-nav">
-  <a class="kpv-nav-logo" href="keys-please-valet.html">Keys <em>Please</em> Valet</a>
+  <a class="kpv-nav-logo" href="index.html">Keys <em>Please</em> Valet</a>
   <div class="kpv-nav-links">
-    <a class="kpv-nav-link" href="keys-please-valet.html">Book</a>
+    <a class="kpv-nav-link" href="index.html">Book</a>
     <a class="kpv-nav-link" href="kpv-portal.html">Customer Portal</a>
     <a class="kpv-nav-link" href="kpv-track.html">GPS Tracker</a>
     <a class="kpv-nav-link active" href="kpv-admin.html">Admin</a>
-    <a class="kpv-nav-book" href="keys-please-valet.html">+ New Booking</a>
+    <a class="kpv-nav-book" href="index.html">+ New Booking</a>
   </div>
 </nav>
 
@@ -289,7 +289,7 @@ tbody tr.expanded{background:rgba(201,153,30,0.05)}
       </div>
       <div class="gate-attempts" id="gAttempts"></div>
       <button class="gate-btn" onclick="doGateLogin()">Authenticate</button>
-      <a class="gate-back" href="keys-please-valet.html">Return to booking site</a>
+      <a class="gate-back" href="index.html">Return to booking site</a>
     </div>
     <div id="gLocked" style="display:none">
       <div class="gate-locked-box">
@@ -297,7 +297,7 @@ tbody tr.expanded{background:rgba(201,153,30,0.05)}
         <div class="gate-locked-msg">Too many failed attempts. Locked for:</div>
         <div class="gate-locked-timer" id="gTimer">5:00</div>
         <div class="gate-locked-msg" style="font-size:0.6rem;margin-top:0.5rem">Contact your administrator.</div>
-        <a class="gate-back" href="keys-please-valet.html" style="margin-top:1.5rem">Return to booking site</a>
+        <a class="gate-back" href="index.html" style="margin-top:1.5rem">Return to booking site</a>
       </div>
     </div>
   </div>
@@ -393,7 +393,7 @@ function draw(){
   if(!n){
     var et=all.length===0?'No bookings yet':'No results found';
     var es=all.length===0?'Submit a booking on the main site &mdash; it will appear here instantly.':'Try adjusting your search or filters.';
-    var el=all.length===0?'<a class="btn-empty" href="keys-please-valet.html">Open Booking Site</a>':'';
+    var el=all.length===0?'<a class="btn-empty" href="index.html">Open Booking Site</a>':'';
     wrap.innerHTML='<div class="empty-state"><div class="empty-icon">&#128451;</div><div class="empty-title">'+et+'</div><div class="empty-sub">'+es+'</div>'+el+'</div>';
     return;
   }
